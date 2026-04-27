@@ -8,6 +8,7 @@ export const SHIPMENT_STATUS = [
 export type ShipmentStatus = (typeof SHIPMENT_STATUS)[number];
 
 export interface Shipment {
+  shipment_id: string;
   customer_id: string;
   customer_name: string;
   product_name: "sample";
@@ -22,7 +23,7 @@ export interface Shipment {
 
 export interface CreateShipmentInput extends Omit<
   Shipment,
-  "createdAt" | "updatedAt"
+  "shipment_id" | "createdAt" | "updatedAt"
 > {}
 
 export interface UpdateShipmentInput extends Partial<
