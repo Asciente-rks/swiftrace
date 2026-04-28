@@ -1,19 +1,21 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { parse } from "../../utils/parse";
 import { handleError, headers } from "../../utils/error-handler";
-import { createShipmentSchema } from "../../validation/shipment-validation";
+import { createUserSchema } from "../../validation/user-validation";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
-import { requireAuth } from "../../utils/auth";
-import type { CreateShipmentInput } from "../../types/shipment";
+import { requireAuth, requireRole } from "../../utils/auth";
+import type { CreateUserInput } from "../../types/user";
 
-export const createShipment = async (
+export const registerUser = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication
+    // JWT authentication and admin check
+    let jwtUser;
     try {
-      requireAuth(event);
+      jwtUser = requireAuth(event);
+      requireRole(jwtUser, "admin");
     } catch (err: any) {
       return {
         statusCode: err.statusCode || 401,
@@ -21,7 +23,6 @@ export const createShipment = async (
         body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
       };
     }
-
     const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
 
     if (!tableName) {
@@ -37,26 +38,24 @@ export const createShipment = async (
 
     // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
-    const validated = (await createShipmentSchema.validate(body, {
+    const validated = (await createUserSchema.validate(body, {
       stripUnknown: true,
-    })) as CreateShipmentInput;
+    })) as CreateUserInput;
 
-    // Create shipment
+    // Create user (admin only)
     const service = new DynamoDBService(docClient, "", tableName);
-    // Optionally, you can use user.user_id or user.role here for auditing/ownership
-    const shipment = await service.createShipment(validated);
-
+    const createdUser = await service.createUser(validated);
     return {
       statusCode: 201,
       headers,
       body: JSON.stringify({
         status: 201,
-        message: "Shipment created successfully",
-        data: shipment,
+        message: "User created successfully",
+        data: createdUser,
       }),
     };
   } catch (error) {
-    console.error("Error creating shipment:", error);
+    console.error("Error creating user:", error);
     return handleError(error);
   }
 };

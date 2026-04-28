@@ -15,13 +15,14 @@ import type {
 } from "../types/shipment";
 import type { ShipmentStatus } from "../types/shipment";
 import type {
-  ShipmentHistoryType,
+  ShipmentHistoryResponse,
   ShipmentHistoryItem,
 } from "../types/history";
 
 // GSI Index Names
 export const ROLE_CREATED_INDEX = "role-createdAt-index";
 export const SHIPMENT_STATUS_INDEX = "status-updatedAt-index";
+export const SHIPMENT_ID_INDEX = "shipmentId-index";
 
 // GSI Key Prefixes
 export const ROLE_PREFIX = "ROLE#"; // GSI 1 PK
@@ -47,6 +48,11 @@ interface ShipmentRecord extends Omit<Shipment, "status_"> {
   PK: string;
   SK: string;
   status_: string; // Allow prefixed value
+}
+
+interface ShipmentHistoryRecord extends ShipmentHistoryItem {
+  PK: string;
+  SK: string;
 }
 
 export class DynamoDBService {
@@ -177,7 +183,7 @@ export class DynamoDBService {
     return {
       ...rest,
       status_: `${STATUS_PREFIX}${status_}`,
-      PK: `${SHIPMENT_PREFIX}${shipment.shipment_id}`,
+      PK: `${SHIPMENT_PREFIX}${shipment.tracking_number}`,
       SK: SHIPMENT_SK_METADATA,
     };
   }
@@ -215,10 +221,12 @@ export class DynamoDBService {
 
     const item = this.shipmentToRecord(shipment);
 
+    // Ensure conditional put to prevent duplicate tracking numbers
     await this.docClient
       .put({
         TableName: this.shipmentTableName,
         Item: item as unknown as Record<string, unknown>,
+        ConditionExpression: "attribute_not_exists(PK)",
       })
       .promise();
 
@@ -229,17 +237,19 @@ export class DynamoDBService {
     shipment_id: string,
     input: UpdateShipmentInput,
   ): Promise<Shipment | null> {
-    const result = await this.docClient
-      .get({
+    // First, query the GSI to find the shipment by shipment_id
+    const gsiResult = await this.docClient
+      .query({
         TableName: this.shipmentTableName,
-        Key: {
-          PK: `${SHIPMENT_PREFIX}${shipment_id}`,
-          SK: SHIPMENT_SK_METADATA,
-        },
+        IndexName: SHIPMENT_ID_INDEX,
+        KeyConditionExpression: "#sid = :sid",
+        ExpressionAttributeNames: { "#sid": "shipment_id" },
+        ExpressionAttributeValues: { ":sid": shipment_id },
+        Limit: 1,
       })
       .promise();
 
-    const record = result.Item as ShipmentRecord | undefined;
+    const record = (gsiResult.Items as ShipmentRecord[] | undefined)?.[0];
     if (!record) return null;
 
     // Remove PK, SK, and convert status_ to plain for update
@@ -262,6 +272,7 @@ export class DynamoDBService {
     return updatedShipment;
   }
 
+  //admin control shipment sorting by status
   async getShipments(filters: ShipmentRetrievalFilters): Promise<Shipment[]> {
     const { status_, sortOrder } = filters;
 
@@ -282,5 +293,94 @@ export class DynamoDBService {
     return (result.Items as ShipmentRecord[]).map((record) =>
       this.recordToShipment(record),
     );
+  }
+
+  //user control, get 1 shipment per tracking number
+  async getShipmentByTrackingNumber(tracking_number: string): Promise<Shipment | null> {
+    // Get the shipment directly using the main table PK (tracking_number)
+    const result = await this.docClient
+      .get({
+        TableName: this.shipmentTableName,
+        Key: {
+          PK: `${SHIPMENT_PREFIX}${tracking_number}`,
+          SK: SHIPMENT_SK_METADATA,
+        },
+      })
+      .promise();
+
+    const record = result.Item as ShipmentRecord | undefined;
+    return record ? this.recordToShipment(record) : null;
+  }
+  
+  private historyToRecord(item: ShipmentHistoryItem): ShipmentHistoryRecord {
+    return {
+      ...item,
+      PK: `${SHIPMENT_PREFIX}${item.tracking_number}`,
+      SK: `${SHIPMENT_SK_EVENT}${item.historyId}`,
+    };
+  }
+
+  private recordToHistory(record: ShipmentHistoryRecord): ShipmentHistoryItem {
+    const { PK, SK, ...rest } = record;
+    return rest as ShipmentHistoryItem;
+  }
+
+  private recordToHistoryResponse(record: ShipmentHistoryRecord): ShipmentHistoryResponse {
+    const { PK, SK, admin_verified, verifiedAt, verifiedBy, ...rest } = record;
+    return rest as ShipmentHistoryResponse;
+  }
+
+  async createShipmentHistory(input: Omit<ShipmentHistoryItem, "historyId" | "historyAt"> & Partial<Pick<ShipmentHistoryItem, "historyId" | "historyAt">>): Promise<ShipmentHistoryItem> {
+    const historyId = input.historyId ?? randomUUID();
+    const historyAt = input.historyAt ?? new Date().toISOString();
+
+    const item: ShipmentHistoryItem = {
+      ...input,
+      historyId,
+      historyAt,
+    };
+
+    const record = this.historyToRecord(item);
+
+    // Ensure conditional put to prevent duplicate history IDs under the same PK
+    await this.docClient
+      .put({
+        TableName: this.shipmentTableName,
+        Item: record as unknown as Record<string, unknown>,
+        ConditionExpression: "attribute_not_exists(PK) AND attribute_not_exists(SK)",
+      })
+      .promise();
+
+    return item;
+  }
+
+  async getShipmentHistory(tracking_number: string): Promise<ShipmentHistoryItem[]> {
+    const result = await this.docClient
+      .query({
+        TableName: this.shipmentTableName,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :skPrefix)",
+        ExpressionAttributeValues: {
+          ":pk": `${SHIPMENT_PREFIX}${tracking_number}`,
+          ":skPrefix": SHIPMENT_SK_EVENT,
+        },
+      })
+      .promise();
+
+    return ((result.Items as ShipmentHistoryRecord[]) ?? []).map((r) => this.recordToHistory(r));
+  }
+  
+  async getShipmentHistoryForUser(tracking_number: string): Promise<ShipmentHistoryResponse[]> {
+    const result = await this.docClient
+      .query({
+        TableName: this.shipmentTableName,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :skPrefix)",
+        ExpressionAttributeValues: {
+          ":pk": `${SHIPMENT_PREFIX}${tracking_number}`,
+          ":skPrefix": SHIPMENT_SK_EVENT,
+        },
+      })
+      .promise();
+
+    return ((result.Items as ShipmentHistoryRecord[]) ?? []).map((r) => this.recordToHistoryResponse(r));
   }
 }

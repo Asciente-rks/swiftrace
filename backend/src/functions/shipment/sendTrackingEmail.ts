@@ -1,13 +1,12 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { parse } from "../../utils/parse";
 import { handleError, headers } from "../../utils/error-handler";
-import { createShipmentSchema } from "../../validation/shipment-validation";
+import { sendTrackingEmail } from "../../utils/email";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { requireAuth } from "../../utils/auth";
-import type { CreateShipmentInput } from "../../types/shipment";
 
-export const createShipment = async (
+export const sendTrackingEmailHandler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -21,7 +20,6 @@ export const createShipment = async (
         body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
       };
     }
-
     const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
 
     if (!tableName) {
@@ -37,26 +35,48 @@ export const createShipment = async (
 
     // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
-    const validated = (await createShipmentSchema.validate(body, {
-      stripUnknown: true,
-    })) as CreateShipmentInput;
+    const email = body?.email as string;
+    const tracking_number = body?.tracking_number as string;
 
-    // Create shipment
+    if (!email || !tracking_number) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          status: 400,
+          message: "Both email and tracking_number are required.",
+        }),
+      };
+    }
+
+    // Optionally, verify the shipment exists
     const service = new DynamoDBService(docClient, "", tableName);
-    // Optionally, you can use user.user_id or user.role here for auditing/ownership
-    const shipment = await service.createShipment(validated);
+    const shipment = await service.getShipmentByTrackingNumber(tracking_number);
+
+    if (!shipment) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({
+          status: 404,
+          message: "Shipment not found.",
+        }),
+      };
+    }
+
+    // Send the email
+    await sendTrackingEmail(email, tracking_number);
 
     return {
-      statusCode: 201,
+      statusCode: 200,
       headers,
       body: JSON.stringify({
-        status: 201,
-        message: "Shipment created successfully",
-        data: shipment,
+        status: 200,
+        message: "Tracking number sent via email.",
       }),
     };
   } catch (error) {
-    console.error("Error creating shipment:", error);
+    console.error("Error sending tracking email:", error);
     return handleError(error);
   }
 };

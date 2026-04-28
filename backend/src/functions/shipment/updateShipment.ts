@@ -1,13 +1,12 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { parse } from "../../utils/parse";
 import { handleError, headers } from "../../utils/error-handler";
-import { createShipmentSchema } from "../../validation/shipment-validation";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { requireAuth } from "../../utils/auth";
-import type { CreateShipmentInput } from "../../types/shipment";
+import type { UpdateShipmentInput } from "../../types/shipment";
 
-export const createShipment = async (
+export const updateShipment = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -21,7 +20,6 @@ export const createShipment = async (
         body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
       };
     }
-
     const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
 
     if (!tableName) {
@@ -35,28 +33,51 @@ export const createShipment = async (
       };
     }
 
+    // Get shipment_id from path or query
+    const shipment_id =
+      event.pathParameters?.shipment_id ||
+      event.queryStringParameters?.shipment_id;
+
+    if (!shipment_id) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          status: 400,
+          message: "shipment_id is required.",
+        }),
+      };
+    }
+
     // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
-    const validated = (await createShipmentSchema.validate(body, {
-      stripUnknown: true,
-    })) as CreateShipmentInput;
+    // Optionally: validate with a schema here
 
-    // Create shipment
     const service = new DynamoDBService(docClient, "", tableName);
-    // Optionally, you can use user.user_id or user.role here for auditing/ownership
-    const shipment = await service.createShipment(validated);
+    const updated = await service.updateShipment(shipment_id, body as UpdateShipmentInput);
+
+    if (!updated) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({
+          status: 404,
+          message: "Shipment not found.",
+        }),
+      };
+    }
 
     return {
-      statusCode: 201,
+      statusCode: 200,
       headers,
       body: JSON.stringify({
-        status: 201,
-        message: "Shipment created successfully",
-        data: shipment,
+        status: 200,
+        message: "Shipment updated successfully",
+        data: updated,
       }),
     };
   } catch (error) {
-    console.error("Error creating shipment:", error);
+    console.error("Error updating shipment:", error);
     return handleError(error);
   }
 };
