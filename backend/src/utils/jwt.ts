@@ -8,6 +8,7 @@ export interface JwtPayload {
   user_id: string;
   role: "admin" | "shipper" | "customer";
   email?: string;
+  name?: string;
   // add more fields as needed
 }
 

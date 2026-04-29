@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import "./UsersView.css";
 
 type UsersViewProps = {
   runRequest: (path: string, options: RequestInit, label: string) => Promise<unknown>;

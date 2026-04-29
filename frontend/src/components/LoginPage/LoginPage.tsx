@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { FormEvent } from "react";
+import { ThemeToggle } from "../ThemeToggle";
+import { Logo } from "../Logo";
+import { Illustration } from "../Illustration";
+import "./LoginPage.css";
 
 type LoginPageProps = {
   apiBase: string;
@@ -43,8 +47,11 @@ const LoginPage = ({ apiBase, setAuthToken }: LoginPageProps) => {
 
   return (
     <div className="login-page">
-      <div className="login-container">
-        <h1>Swiftrace Login</h1>
+      <ThemeToggle />
+      <div className="login-layout">
+        <div className="login-container">
+          <Logo className="login-logo" size="small" />
+          <h1>Swiftrace Login</h1>
         <form onSubmit={handleLogin}>
           <label>
             Email
@@ -70,7 +77,9 @@ const LoginPage = ({ apiBase, setAuthToken }: LoginPageProps) => {
         </form>
         {error && <p className="error">{error}</p>}
       </div>
+      <Illustration type="robot" className="login-illustration" size="large" />
     </div>
+  </div>
   );
 };
 

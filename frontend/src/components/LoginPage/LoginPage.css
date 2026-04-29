@@ -1,0 +1,156 @@
+/* LoginPage component styles */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  position: relative;
+}
+
+.login-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 60px;
+  max-width: 1000px;
+  width: 100%;
+}
+
+.login-container {
+  flex: 1;
+  max-width: 460px;
+  padding: 32px;
+  border-radius: 28px;
+  background: rgba(255, 247, 238, 0.88);
+  border: 1px solid rgba(230, 213, 194, 0.9);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.login-logo {
+  margin: 0 auto 16px;
+  display: block;
+  background: transparent;
+}
+
+.login-illustration {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.login-container h1 {
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.login-container p {
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.login-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-container label,
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.login-container input,
+.field input,
+.field select,
+.token-box input {
+  font: inherit;
+  border: 1px solid rgba(230, 213, 194, 0.9);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 12px 14px;
+  color: var(--ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.login-container input:focus,
+.field input:focus,
+.field select:focus,
+.token-box input:focus {
+  outline: none;
+  border-color: rgba(15, 118, 110, 0.65);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+}
+
+.login-container button,
+.btn-primary,
+.sample-order button,
+.shipment-update button,
+.admin-section button {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), #0ea5a0);
+  color: #fff;
+  font-weight: 800;
+  padding: 12px 18px;
+  box-shadow: 0 16px 28px rgba(15, 118, 110, 0.24);
+}
+
+.login-container button:disabled {
+  background: #ccc;
+}
+
+/* Dark mode adjustments for login page */
+.dark .login-container {
+  background: rgba(42, 42, 42, 0.95);
+  border-color: rgba(64, 64, 64, 0.9);
+}
+
+.dark .login-container input,
+.dark .field input,
+.dark .field select,
+.dark .token-box input {
+  background: rgba(26, 26, 26, 0.92);
+  border-color: rgba(64, 64, 64, 0.9);
+  color: var(--ink);
+}
+
+.dark .login-container input:focus,
+.dark .field input:focus,
+.dark .field select:focus,
+.dark .token-box input:focus {
+  border-color: rgba(15, 118, 110, 0.65);
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .login-layout {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .login-illustration {
+    order: -1; /* Move illustration above form on mobile */
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-page {
+    padding: 16px;
+  }
+
+  .login-container {
+    padding: 24px;
+  }
+
+  .login-illustration {
+    width: 200px;
+    height: auto;
+  }
+}

@@ -1,0 +1,36 @@
+/* Theme Toggle Component */
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--stroke);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Dark mode adjustments */
+.dark .theme-toggle {
+  background: var(--surface);
+  border-color: var(--stroke);
+  color: var(--ink);
+}

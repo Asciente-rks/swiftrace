@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import "./SampleOrderSection.css";
 
 type SampleOrderSectionProps = {
   apiBase: string;

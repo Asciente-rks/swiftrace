@@ -23,6 +23,19 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Dark mode variables */
+.dark {
+  --bg: #1a1a1a;
+  --surface: #2a2a2a;
+  --ink: #f5f5f5;
+  --muted: #a3a3a3;
+  --accent: #0f766e;
+  --accent-2: #ff6b35;
+  --stroke: #404040;
+  --shadow: 0 18px 34px rgba(0, 0, 0, 0.3);
+  --shadow-soft: 0 10px 18px rgba(0, 0, 0, 0.2);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -35,6 +48,14 @@ body {
     radial-gradient(circle at 85% 0%, #ffe4d3, transparent 40%),
     var(--bg);
   position: relative;
+  transition: background 0.3s ease;
+}
+
+.dark body {
+  background: radial-gradient(circle at top left, #2a2a2a, transparent 55%),
+    radial-gradient(circle at 20% 20%, #1a1a1a, transparent 45%),
+    radial-gradient(circle at 85% 0%, #333333, transparent 40%),
+    var(--bg);
 }
 
 body::before {
@@ -50,6 +71,15 @@ body::before {
   opacity: 0.3;
   pointer-events: none;
   z-index: 0;
+}
+
+.dark body::before {
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  opacity: 0.1;
 }
 
 a {

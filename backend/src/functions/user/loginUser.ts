@@ -39,7 +39,7 @@ export const loginUser = async (
       };
     }
 
-    const token = signJwt({ user_id: user.user_id, role: user.role, email: user.email });
+    const token = signJwt({ user_id: user.user_id, role: user.role, email: user.email, name: user.name });
 
     return {
       statusCode: 200,

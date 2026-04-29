@@ -12,3 +12,8 @@ export const getRoleFromToken = (token: string) => {
   const decoded = decodeJWT(token);
   return decoded?.role || null;
 };
+
+export const getUserNameFromToken = (token: string) => {
+  const decoded = decodeJWT(token);
+  return decoded?.name || null;
+};
