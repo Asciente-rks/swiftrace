@@ -4,8 +4,8 @@
   top: 20px;
   padding: 18px;
   border-radius: 24px;
-  background: rgba(255, 247, 238, 0.84);
-  border: 1px solid rgba(230, 213, 194, 0.9);
+  background: var(--surface-84);
+  border: 1px solid var(--surface-85);
   box-shadow: var(--shadow-soft);
 }
 
@@ -25,7 +25,7 @@
 .sidebar button {
   width: 100%;
   text-align: left;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--surface-80);
   font: inherit;
   cursor: pointer;
   border-radius: 999px;
@@ -38,7 +38,7 @@
 .sidebar button:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 22px rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--surface-95);
 }
 
 .sidebar button.active {

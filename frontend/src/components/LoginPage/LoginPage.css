@@ -22,8 +22,8 @@
   max-width: 460px;
   padding: 32px;
   border-radius: 28px;
-  background: rgba(255, 247, 238, 0.88);
-  border: 1px solid rgba(230, 213, 194, 0.9);
+  background: var(--surface-88);
+  border: 1px solid var(--surface-85);
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
 }
@@ -70,9 +70,9 @@
 .field select,
 .token-box input {
   font: inherit;
-  border: 1px solid rgba(230, 213, 194, 0.9);
+  border: 1px solid var(--surface-85);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--surface-92);
   padding: 12px 14px;
   color: var(--ink);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;

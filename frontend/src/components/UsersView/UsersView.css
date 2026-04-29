@@ -6,12 +6,21 @@
   font-weight: 600;
   color: var(--muted);
 }
+
+.users-view .edit-form {
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--surface-88);
+  border: 1px solid var(--surface-85);
+  box-shadow: var(--shadow-soft);
+  margin-top: 16px;
+}
 .users-view .edit-form input,
 .users-view .edit-form select {
   font: inherit;
   border: 1px solid rgba(230, 213, 194, 0.9);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--surface-92);
   padding: 12px 14px;
   color: var(--ink);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -66,7 +75,7 @@
   cursor: pointer;
   border-radius: 999px;
   border: 1px solid rgba(230, 213, 194, 0.95);
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--surface-78);
   color: var(--ink);
   padding: 11px 20px;
   font-weight: 700;
@@ -76,5 +85,5 @@
 .users-view .btn-cancel:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 22px rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--surface-95);
 }

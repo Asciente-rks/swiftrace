@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import './UserDropdown.css';
 
@@ -10,11 +11,19 @@ interface UserDropdownProps {
 export const UserDropdown = ({ userName, onLogout }: UserDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedInsideDropdown = dropdownRef.current && dropdownRef.current.contains(target);
+      const clickedInsideMenu = menuRef.current && menuRef.current.contains(target);
+      const clickedTrigger = triggerRef.current && triggerRef.current.contains(target);
+
+      if (!clickedInsideDropdown && !clickedInsideMenu && !clickedTrigger) {
         setIsOpen(false);
       }
     };
@@ -23,9 +32,21 @@ export const UserDropdown = ({ userName, onLogout }: UserDropdownProps) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const top = rect.bottom + 8; // 8px gap
+      const rightPx = window.innerWidth - rect.right;
+      setMenuStyle({ position: 'fixed', top: `${top}px`, right: `${rightPx}px`, zIndex: 99999 });
+    } else {
+      setMenuStyle(null);
+    }
+  }, [isOpen]);
+
   return (
     <div className="user-dropdown" ref={dropdownRef}>
       <button
+        ref={triggerRef}
         className="user-dropdown-trigger"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="User menu"
@@ -41,24 +62,25 @@ export const UserDropdown = ({ userName, onLogout }: UserDropdownProps) => {
           <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
-
       {isOpen && (
-        <div className="user-dropdown-menu">
-          <div className="dropdown-item theme-toggle-item">
-            <span>Theme</span>
+        createPortal(
+          <div className="user-dropdown-menu portal" style={menuStyle ?? undefined} ref={menuRef}>
             <button
-              onClick={toggleTheme}
-              className="theme-toggle-btn"
-              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              type="button"
+              className="dropdown-item theme-toggle-action"
+              onClick={() => toggleTheme()}
+              aria-pressed={theme === 'dark'}
             >
-              {theme === 'light' ? '🌙' : '☀️'}
+              <span>Theme</span>
+              <span className="theme-icon">{theme === 'light' ? '🌙' : '☀️'}</span>
             </button>
-          </div>
-          <div className="dropdown-divider"></div>
-          <button className="dropdown-item logout-btn" onClick={onLogout}>
-            <span>Logout</span>
-          </button>
-        </div>
+            <div className="dropdown-divider"></div>
+            <button className="dropdown-item logout-btn" onClick={onLogout}>
+              <span>Logout</span>
+            </button>
+          </div>,
+          document.body
+        )
       )}
     </div>
   );
