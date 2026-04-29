@@ -6,8 +6,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/handler.js",
-    "dev": "ts-node src/handler.ts",
-    "seed": "ts-node seed.ts"
+    "dev": "ts-node src/handler.js",
+    "seed": "ts-node seed.ts",
+    "clear": "ts-node clear.ts"
   },
   "dependencies": {
     "aws-sdk": "^2.1693.0",

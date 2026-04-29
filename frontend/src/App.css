@@ -594,48 +594,127 @@
   border-bottom: 1px solid #ddd;
 }
 
-.tracking-result-card {
-  margin-top: 20px;
-  padding: 20px;
+.tracking-details-card {
+  margin: 20px 0;
+  padding: 25px;
   background: white;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
 }
 
-.tracking-result-card h3 {
-  margin: 0 0 15px 0;
+.tracking-details-card h3 {
+  margin: 0 0 20px 0;
   color: #333;
+  font-size: 1.5em;
 }
 
-.tracking-result-card .status-grid {
+.tracking-details-card.error {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.tracking-details-card.error h3 {
+  color: #721c24;
+}
+
+.details-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 15px;
   margin-bottom: 20px;
 }
 
-.tracking-result-card .status-grid div {
-  padding: 10px;
+.details-grid div {
+  padding: 15px;
   background: #f8f9fa;
   border-radius: 4px;
+  border: 1px solid #e9ecef;
 }
 
-.tracking-result-card .status-grid span {
+.details-grid strong {
   display: block;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 5px;
+}
+
+.details-grid div {
+  font-size: 1em;
+  color: #6c757d;
+}
+
+.shipment-history h4 {
+  margin: 25px 0 15px 0;
+  color: #333;
+  font-size: 1.2em;
+}
+
+.shipment-history ul {
+  list-style: none;
+  padding: 0;
+}
+
+.edit-form {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.edit-form h3 {
+  margin: 0 0 15px 0;
+}
+
+.edit-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 400px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-edit {
+  padding: 5px 10px;
+  background: #ffc107;
+  color: #212529;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   font-size: 0.9em;
-  color: #666;
 }
 
-.tracking-result-card .status-grid strong {
-  display: block;
-  font-size: 1.1em;
-  color: #333;
+.btn-edit:hover {
+  background: #ffca2c;
 }
 
-.tracking-result-card .tracking-history h4 {
-  margin: 20px 0 10px 0;
-  color: #333;
+.btn-save {
+  padding: 10px 20px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.shipment-history li strong {
+  color: #007bff;
 }
 
 .admin-section, .sample-order, .shipment-update {
@@ -1083,6 +1162,82 @@ body {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+.shipment-history li {
+  padding: 5px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.btn-update {
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-update:hover {
+  background: #0056b3;
+}
+
+.edit-form {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.edit-form h3 {
+  margin: 0 0 15px 0;
+}
+
+.edit-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 400px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-edit {
+  padding: 5px 10px;
+  background: #ffc107;
+  color: #212529;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.btn-edit:hover {
+  background: #ffca2c;
+}
+
+.btn-save {
+  padding: 10px 20px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 @media (max-width: 720px) {

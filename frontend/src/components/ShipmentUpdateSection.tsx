@@ -58,10 +58,10 @@ const ShipmentUpdateSection = ({ apiBase, authToken, runRequest }: ShipmentUpdat
             placeholder="Regional hub"
           />
         </label>
-        <button type="submit">Update Status</button>
+        <button type="submit" className="btn-update">Update Status</button>
       </form>
     </section>
   );
 };
 
-export default ShipmentUpdateSection;
+export { ShipmentUpdateSection };

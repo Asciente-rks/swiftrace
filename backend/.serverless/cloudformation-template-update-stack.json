@@ -242,7 +242,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/user/createUser.registerUser",
         "Runtime": "nodejs20.x",
@@ -278,7 +278,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/user/loginUser.loginUser",
         "Runtime": "nodejs20.x",
@@ -314,7 +314,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/user/updateUser.updateUser",
         "Runtime": "nodejs20.x",
@@ -350,7 +350,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/user/deleteUser.deleteUser",
         "Runtime": "nodejs20.x",
@@ -386,7 +386,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/user/getUserByRole.getUsersByRole",
         "Runtime": "nodejs20.x",
@@ -422,7 +422,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/shipment/placeSampleOrder.placeSampleOrder",
         "Runtime": "nodejs20.x",
@@ -458,7 +458,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/shipment/createShipment.createShipment",
         "Runtime": "nodejs20.x",
@@ -494,7 +494,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/shipment/updateShipment.updateShipment",
         "Runtime": "nodejs20.x",
@@ -530,7 +530,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/shipment/getShipmentByTracking.getShipmentByTracking",
         "Runtime": "nodejs20.x",
@@ -566,7 +566,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/shipment/getShipmentHistory.getShipmentHistoryForUser",
         "Runtime": "nodejs20.x",
@@ -602,7 +602,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/shipment/getShipmentByStatus.getShipmentsByStatus",
         "Runtime": "nodejs20.x",
@@ -638,7 +638,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+          "S3Key": "serverless/swiftrace/dev/1777442798142-2026-04-29T06:06:38.142Z/swiftrace.zip"
         },
         "Handler": "dist/src/functions/shipment/sendTrackingEmail.sendTrackingEmailHandler",
         "Runtime": "nodejs20.x",
@@ -667,124 +667,124 @@
         "SendTrackingEmailLogGroup"
       ]
     },
-    "CreateUserLambdaVersionpu554DBi3ixVbTfKxUJMcFJyjafE7go3TpgZthFTQ": {
+    "CreateUserLambdaVersionvEoHgXZYt9p0NjhIONFxpNWaNpaRAsQLfQ8BpBqdDQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateUserLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "LoginUserLambdaVersionsnu1Gu5KtdK7MS6lGpD0Q45k1OEZLhVD3C5cdqa4zw": {
+    "LoginUserLambdaVersion748796BGxjuPn1idgBCtLlmeVOq7ogwLbnYahMccpg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "LoginUserLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "UpdateUserLambdaVersion4HmaRnVvpUngevcAPzbzOODzzBlRjReugC2OkcqI9yc": {
+    "UpdateUserLambdaVersionMzlrWmlwJ5MKdk35QTALfu962QDIAY9NLRy1VwQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "UpdateUserLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "DeleteUserLambdaVersionvXwHvbBSk9oUdUJe0VHBMOaKnYLMRZDLvc01cyQ": {
+    "DeleteUserLambdaVersionhGjfG6CQ5FnBaskCb4fBREHJvcdPgZnnomawNb7oo": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "DeleteUserLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "GetUsersByRoleLambdaVersionGGZSyXPz45fSAbVTBz9tUe1b42NbkVkeLc96vAmE4ZE": {
+    "GetUsersByRoleLambdaVersionEz1nE1ZFcwyCijAmQMGLqHNeP1kyLaUBIdAh5l1pKA": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "GetUsersByRoleLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "PlaceSampleOrderLambdaVersionENEpwHtIy3xkEthbk7TOvrkQtfCjm4G8RryO9CC3do": {
+    "PlaceSampleOrderLambdaVersionxhMaKMYelKmgkHkUZi3IxVWZhMxukcuCsJdc105oA": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "PlaceSampleOrderLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "CreateShipmentLambdaVersionPCgvKzgzG9pVMcBF1NAi4PibOBbNlFIw1yvCbz1nF4": {
+    "CreateShipmentLambdaVersion2Qd04ynnkKPw4GhTcheejoAhWcZN6JDYaq08iaOib8": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateShipmentLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "UpdateShipmentLambdaVersionOXgOLxGSky34CXRwMCZ3ov4MjllqetmIvl8FRDKwPs": {
+    "UpdateShipmentLambdaVersionzODAlo3XuBp9Lh5ENdUX8q4kPjdj2RxZcIGM3s4PhE": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "UpdateShipmentLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "GetShipmentByTrackingLambdaVersionPsxmjNQmn1qb2d3D1NTjvhmb1MpPmiW0aHOiPavE": {
+    "GetShipmentByTrackingLambdaVersionPD5AqDKMYe2u54f1akbuwXco8DEdnyxAC96uL4ZL6A": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "GetShipmentByTrackingLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "GetShipmentHistoryForUserLambdaVersionLDJQR11rpHw6RDChax8I1n0hviyK9VN8K704ULMX8": {
+    "GetShipmentHistoryForUserLambdaVersionGHmgMHRoBANSk7BsTS6XCIYXA6zhaga1cIhU5uCJoA": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "GetShipmentHistoryForUserLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "GetShipmentsByStatusLambdaVersionqv4BdHZre3GfClPxm1qNMy6mDOWp9pFdWSUx6cmK4": {
+    "GetShipmentsByStatusLambdaVersionyffcmf4NLrVembDjuIw9CpzQA6ahaGvUyYpdMvgTdAE": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "GetShipmentsByStatusLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
-    "SendTrackingEmailLambdaVersionXmoyDMgAEqvWDt4p3avRIYkzHdGB69KADP3NDMjuo": {
+    "SendTrackingEmailLambdaVersionR606yGb00LPOuHoFzm0bb5HwutFgiuQX1p4ruO5lfeM": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SendTrackingEmailLambdaFunction"
         },
-        "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+        "CodeSha256": "dwmvbW0Qpy7nlq/bToQdWc/LQfSF6yUZOlS2bqA2Tso="
       }
     },
     "ApiGatewayRestApi": {
@@ -1993,7 +1993,7 @@
         "SendTrackingEmailLambdaPermissionApiGateway"
       ]
     },
-    "ApiGatewayDeployment1777434835546": {
+    "ApiGatewayDeployment1777442785956": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -2592,7 +2592,7 @@
     "CreateUserLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateUserLambdaVersionpu554DBi3ixVbTfKxUJMcFJyjafE7go3TpgZthFTQ"
+        "Ref": "CreateUserLambdaVersionvEoHgXZYt9p0NjhIONFxpNWaNpaRAsQLfQ8BpBqdDQ"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-CreateUserLambdaFunctionQualifiedArn"
@@ -2601,7 +2601,7 @@
     "LoginUserLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "LoginUserLambdaVersionsnu1Gu5KtdK7MS6lGpD0Q45k1OEZLhVD3C5cdqa4zw"
+        "Ref": "LoginUserLambdaVersion748796BGxjuPn1idgBCtLlmeVOq7ogwLbnYahMccpg"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-LoginUserLambdaFunctionQualifiedArn"
@@ -2610,7 +2610,7 @@
     "UpdateUserLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "UpdateUserLambdaVersion4HmaRnVvpUngevcAPzbzOODzzBlRjReugC2OkcqI9yc"
+        "Ref": "UpdateUserLambdaVersionMzlrWmlwJ5MKdk35QTALfu962QDIAY9NLRy1VwQ"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-UpdateUserLambdaFunctionQualifiedArn"
@@ -2619,7 +2619,7 @@
     "DeleteUserLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "DeleteUserLambdaVersionvXwHvbBSk9oUdUJe0VHBMOaKnYLMRZDLvc01cyQ"
+        "Ref": "DeleteUserLambdaVersionhGjfG6CQ5FnBaskCb4fBREHJvcdPgZnnomawNb7oo"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-DeleteUserLambdaFunctionQualifiedArn"
@@ -2628,7 +2628,7 @@
     "GetUsersByRoleLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "GetUsersByRoleLambdaVersionGGZSyXPz45fSAbVTBz9tUe1b42NbkVkeLc96vAmE4ZE"
+        "Ref": "GetUsersByRoleLambdaVersionEz1nE1ZFcwyCijAmQMGLqHNeP1kyLaUBIdAh5l1pKA"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-GetUsersByRoleLambdaFunctionQualifiedArn"
@@ -2637,7 +2637,7 @@
     "PlaceSampleOrderLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "PlaceSampleOrderLambdaVersionENEpwHtIy3xkEthbk7TOvrkQtfCjm4G8RryO9CC3do"
+        "Ref": "PlaceSampleOrderLambdaVersionxhMaKMYelKmgkHkUZi3IxVWZhMxukcuCsJdc105oA"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-PlaceSampleOrderLambdaFunctionQualifiedArn"
@@ -2646,7 +2646,7 @@
     "CreateShipmentLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateShipmentLambdaVersionPCgvKzgzG9pVMcBF1NAi4PibOBbNlFIw1yvCbz1nF4"
+        "Ref": "CreateShipmentLambdaVersion2Qd04ynnkKPw4GhTcheejoAhWcZN6JDYaq08iaOib8"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-CreateShipmentLambdaFunctionQualifiedArn"
@@ -2655,7 +2655,7 @@
     "UpdateShipmentLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "UpdateShipmentLambdaVersionOXgOLxGSky34CXRwMCZ3ov4MjllqetmIvl8FRDKwPs"
+        "Ref": "UpdateShipmentLambdaVersionzODAlo3XuBp9Lh5ENdUX8q4kPjdj2RxZcIGM3s4PhE"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-UpdateShipmentLambdaFunctionQualifiedArn"
@@ -2664,7 +2664,7 @@
     "GetShipmentByTrackingLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "GetShipmentByTrackingLambdaVersionPsxmjNQmn1qb2d3D1NTjvhmb1MpPmiW0aHOiPavE"
+        "Ref": "GetShipmentByTrackingLambdaVersionPD5AqDKMYe2u54f1akbuwXco8DEdnyxAC96uL4ZL6A"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-GetShipmentByTrackingLambdaFunctionQualifiedArn"
@@ -2673,7 +2673,7 @@
     "GetShipmentHistoryForUserLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "GetShipmentHistoryForUserLambdaVersionLDJQR11rpHw6RDChax8I1n0hviyK9VN8K704ULMX8"
+        "Ref": "GetShipmentHistoryForUserLambdaVersionGHmgMHRoBANSk7BsTS6XCIYXA6zhaga1cIhU5uCJoA"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-GetShipmentHistoryForUserLambdaFunctionQualifiedArn"
@@ -2682,7 +2682,7 @@
     "GetShipmentsByStatusLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "GetShipmentsByStatusLambdaVersionqv4BdHZre3GfClPxm1qNMy6mDOWp9pFdWSUx6cmK4"
+        "Ref": "GetShipmentsByStatusLambdaVersionyffcmf4NLrVembDjuIw9CpzQA6ahaGvUyYpdMvgTdAE"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-GetShipmentsByStatusLambdaFunctionQualifiedArn"
@@ -2691,7 +2691,7 @@
     "SendTrackingEmailLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SendTrackingEmailLambdaVersionXmoyDMgAEqvWDt4p3avRIYkzHdGB69KADP3NDMjuo"
+        "Ref": "SendTrackingEmailLambdaVersionR606yGb00LPOuHoFzm0bb5HwutFgiuQX1p4ruO5lfeM"
       },
       "Export": {
         "Name": "sls-swiftrace-dev-SendTrackingEmailLambdaFunctionQualifiedArn"

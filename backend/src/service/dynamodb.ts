@@ -341,13 +341,12 @@ export class DynamoDBService {
   //user control, get 1 shipment per tracking number
   async getShipmentByTrackingNumber(tracking_number: string): Promise<Shipment | null> {
     const result = await this.docClient
-      .scan({
+      .query({
         TableName: this.shipmentTableName,
-        FilterExpression: "begins_with(PK, :shipmentPrefix) AND #tracking_number = :tracking_number",
-        ExpressionAttributeNames: { "#tracking_number": "tracking_number" },
+        KeyConditionExpression: "PK = :pk AND SK = :sk",
         ExpressionAttributeValues: {
-          ":shipmentPrefix": "SHIPMENT#",
-          ":tracking_number": tracking_number,
+          ":pk": `${SHIPMENT_PREFIX}${tracking_number}`,
+          ":sk": SHIPMENT_SK_METADATA,
         },
         Limit: 1,
       })

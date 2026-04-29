@@ -12,8 +12,8 @@ export const getShipmentByTracking = async (
 
     // Get tracking number from query string or path parameters
     const tracking_number =
-      event.queryStringParameters?.tracking_number ||
-      event.pathParameters?.tracking_number;
+      event.pathParameters?.tracking_number ||
+      event.queryStringParameters?.tracking_number;
 
     if (!tracking_number) {
       return {
@@ -44,6 +44,9 @@ export const getShipmentByTracking = async (
 
     // Fetch shipment history (user-safe)
     const history = await service.getShipmentHistoryForUser(tracking_number);
+
+    console.log('Shipment metadata:', JSON.stringify(shipment, null, 2));
+    console.log('History:', JSON.stringify(history, null, 2));
 
     return {
       statusCode: 200,

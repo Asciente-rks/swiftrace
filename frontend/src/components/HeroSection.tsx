@@ -5,6 +5,7 @@ type HeroSectionProps = {
   setTrackingNumber: (value: string) => void;
   onTrack: (event: FormEvent<HTMLFormElement>) => void;
   trackedShipment: any;
+  trackingStatus: 'idle' | 'loading' | 'found' | 'not_found';
 };
 
 const HeroSection = ({
@@ -12,6 +13,7 @@ const HeroSection = ({
   setTrackingNumber,
   onTrack,
   trackedShipment,
+  trackingStatus,
 }: HeroSectionProps) => (
   <section className="hero" id="track">
     <div className="hero-copy">
@@ -74,54 +76,58 @@ const HeroSection = ({
           Find shipment
         </button>
       </form>
-      {trackedShipment && (
-        <div className="tracking-result-card">
-          <h3>Tracking Results</h3>
-          <div className="status-grid">
-            <div>
-              <span>Status</span>
-              <strong>{trackedShipment.shipment?.status_}</strong>
+      <div className="tracking-result-card">
+        <h3>Tracking Results</h3>
+        {trackingStatus === 'loading' && <p>Searching for shipment...</p>}
+        {trackingStatus === 'found' && trackedShipment && trackedShipment.shipment && (
+          <>
+            <div className="status-grid">
+              <div>
+                <span>Status</span>
+                <strong>{trackedShipment.shipment.status_ || 'N/A'}</strong>
+              </div>
+              <div>
+                <span>Current Location</span>
+                <strong>{trackedShipment.shipment.current_location || 'N/A'}</strong>
+              </div>
+              <div>
+                <span>Origin</span>
+                <strong>{trackedShipment.shipment.origin || 'N/A'}</strong>
+              </div>
+              <div>
+                <span>Destination</span>
+                <strong>{trackedShipment.shipment.destination || 'N/A'}</strong>
+              </div>
+              <div>
+                <span>Customer</span>
+                <strong>{trackedShipment.shipment.customer_name || 'N/A'}</strong>
+              </div>
+              <div>
+                <span>Tracking Number</span>
+                <strong>{trackedShipment.shipment.tracking_number || 'N/A'}</strong>
+              </div>
             </div>
-            <div>
-              <span>Current Location</span>
-              <strong>{trackedShipment.shipment?.current_location || 'N/A'}</strong>
-            </div>
-            <div>
-              <span>Origin</span>
-              <strong>{trackedShipment.shipment?.origin}</strong>
-            </div>
-            <div>
-              <span>Destination</span>
-              <strong>{trackedShipment.shipment?.destination}</strong>
-            </div>
-            <div>
-              <span>Customer</span>
-              <strong>{trackedShipment.shipment?.customer_name}</strong>
-            </div>
-            <div>
-              <span>Tracking Number</span>
-              <strong>{trackedShipment.shipment?.tracking_number}</strong>
-            </div>
+            {Array.isArray(trackedShipment.history) && trackedShipment.history.length > 0 && (
+              <div className="tracking-history">
+                <h4>Shipment History</h4>
+                <ul>
+                  {trackedShipment.history.map((item: any, index: number) => (
+                    <li key={index}>
+                      <strong>{item.historyType || 'Unknown'}</strong> - {item.status || 'N/A'} at {item.current_location || 'N/A'} ({item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+        {trackingStatus === 'found' && (!trackedShipment || !trackedShipment.shipment) && (
+          <div className="tracking-details-card error">
+            <h3>Shipment Not Found</h3>
+            <p>Invalid shipment data received.</p>
           </div>
-          {Array.isArray(trackedShipment.history) && trackedShipment.history.length > 0 && (
-            <div className="tracking-history">
-              <h4>Shipment History</h4>
-              <ul>
-                {trackedShipment.history.map((item: any, index: number) => (
-                  <li key={index}>
-                    <strong>{item.historyType || 'Unknown'}</strong> - {item.status || 'N/A'} at {item.current_location || 'N/A'} ({item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'})
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-      <div className="media-slot">
-        <div>
-          <p>Drop Icons8 mp4 or svg here later.</p>
-          <span>Hero media placeholder</span>
-        </div>
+        )}
+        {trackingStatus === 'not_found' && <p>Shipment not found. Please check the tracking number.</p>}
       </div>
     </div>
   </section>

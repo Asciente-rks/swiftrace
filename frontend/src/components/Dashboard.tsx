@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 import HeroSection from "./HeroSection";
 import FlowSection from "./FlowSection";
 import SampleOrderSection from "./SampleOrderSection";
-import ShipmentUpdateSection from "./ShipmentUpdateSection";
+import { ShipmentUpdateSection } from "./ShipmentUpdateSection";
 import AdminSection from "./AdminSection";
 import UsersView from "./UsersView";
 import ShipmentsView from "./ShipmentsView";
@@ -24,7 +24,7 @@ const Dashboard = ({ apiBase, authToken, setAuthToken }: DashboardProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [currentView, setCurrentView] = useState('track');
-  const [trackedShipment, setTrackedShipment] = useState<any>(null);
+  const [trackedShipment, setTrackedShipment] = useState<any>({ shipment: null, history: [] });
   const [trackingStatus, setTrackingStatus] = useState<'idle' | 'loading' | 'found' | 'not_found'>('idle');
   const navigate = useNavigate();
 
@@ -85,11 +85,11 @@ const Dashboard = ({ apiBase, authToken, setAuthToken }: DashboardProps) => {
       { method: "GET" },
       "Track shipment"
     );
-    if (data && typeof data === 'object' && 'data' in data) {
-      setTrackedShipment((data as any).data);
+    if (data && typeof data === 'object' && 'shipment' in data && data.shipment) {
+      setTrackedShipment(data);
       setTrackingStatus('found');
     } else {
-      setTrackedShipment(null);
+      setTrackedShipment({ shipment: null, history: [] });
       setTrackingStatus('not_found');
     }
   };
@@ -106,16 +106,18 @@ const Dashboard = ({ apiBase, authToken, setAuthToken }: DashboardProps) => {
     switch (currentView) {
       case 'track':
         return (
-          <>
+          <div className="track-content">
             <HeroSection
+              key={`track-${trackingNumber}-${Date.now()}`}
               trackingNumber={trackingNumber}
               setTrackingNumber={setTrackingNumber}
               onTrack={handleTracking}
               trackedShipment={trackedShipment}
               trackingStatus={trackingStatus}
             />
+
             <FlowSection />
-          </>
+          </div>
         );
       case 'order':
         return <SampleOrderSection apiBase={apiBase} authToken={authToken} runRequest={runRequest} />;
@@ -132,50 +134,24 @@ const Dashboard = ({ apiBase, authToken, setAuthToken }: DashboardProps) => {
     }
   };
 
-  return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>Swiftrace Dashboard</h1>
-        <div>
-          <span>Role: {role}</span>
-          <button onClick={handleLogout}>Logout</button>
-        </div>
-      </header>
-      <div className="dashboard-content">
-        <Sidebar role={role} currentView={currentView} setCurrentView={setCurrentView} />
-        <main>
-          {renderMainContent()}
-          {response && (
-            <div className="response-display">
-              {response.status === 200 ? (
-                <div className="success-message">
-                  <h3>Success</h3>
-                  <p>{response.label} completed successfully.</p>
-                  {response.payload && typeof response.payload === 'object' && (
-                    <div>
-                      {response.payload.name && <p><strong>Name:</strong> {response.payload.name}</p>}
-                      {response.payload.email && <p><strong>Email:</strong> {response.payload.email}</p>}
-                      {response.payload.role && <p><strong>Role:</strong> {response.payload.role}</p>}
-                      {response.payload.tracking_number && <p><strong>Tracking Number:</strong> {response.payload.tracking_number}</p>}
-                      {response.payload.status_ && <p><strong>Status:</strong> {response.payload.status_}</p>}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="error-message">
-                  <h3>Error</h3>
-                  <p>{response.label} failed.</p>
-                  <p><strong>Status:</strong> {response.status}</p>
-                  <p><strong>Message:</strong> {response.payload || response.error}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </main>
-      </div>
-      <Footer />
-    </div>
-  );
+   return (
+     <div className="dashboard">
+       <header className="dashboard-header">
+         <h1>Swiftrace Dashboard</h1>
+         <div>
+           <span>Role: {role}</span>
+           <button onClick={handleLogout}>Logout</button>
+         </div>
+       </header>
+       <div className="dashboard-content">
+         <Sidebar role={role} currentView={currentView} setCurrentView={setCurrentView} />
+         <main>
+           {renderMainContent()}
+         </main>
+       </div>
+       <Footer />
+     </div>
+   );
 };
 
 export default Dashboard;
