@@ -1,0 +1,81 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Space+Mono:wght@400;700&display=swap");
+
+:root {
+  --bg: #f7f1e8;
+  --surface: #fff7ee;
+  --ink: #1b1b1b;
+  --muted: #6d655b;
+  --accent: #0f766e;
+  --accent-2: #ff6b35;
+  --stroke: #e6d5c2;
+  --shadow: 0 18px 34px rgba(28, 22, 18, 0.08);
+  --shadow-soft: 0 10px 18px rgba(28, 22, 18, 0.06);
+  --radius: 18px;
+
+  --display: "Bricolage Grotesque", "Segoe UI", sans-serif;
+  --mono: "Space Mono", "SFMono-Regular", ui-monospace, monospace;
+
+  font-family: var(--display);
+  color: var(--ink);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #fbe7d3, transparent 55%),
+    radial-gradient(circle at 20% 20%, #d7efe9, transparent 45%),
+    radial-gradient(circle at 85% 0%, #ffe4d3, transparent 40%),
+    var(--bg);
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.6) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.6) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--display);
+}
+
+h1 {
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: clamp(24px, 3vw, 32px);
+}
+
+p {
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+}

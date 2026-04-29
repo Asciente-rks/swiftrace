@@ -4,6 +4,9 @@ import { handleError, headers } from "../../utils/error-handler";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { requireAuth, requireSelfOrRole } from "../../utils/auth";
+import { getTableName } from "../../utils/env";
+import { toPublicUser } from "../../utils/user";
+import { updateUserSchema } from "../../validation/user-validation";
 import type { UpdateUserInput } from "../../types/user";
 
 export const updateUser = async (
@@ -22,18 +25,7 @@ export const updateUser = async (
       };
     }
 
-    const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
-
-    if (!tableName) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          status: 500,
-          message: "SHIPMENT_DYNAMO_TABLE environment variable is not set.",
-        }),
-      };
-    }
+    const tableName = getTableName();
 
     // Get user_id from path or query
     const user_id =
@@ -63,10 +55,22 @@ export const updateUser = async (
 
     // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
-    // Optionally: validate with a schema here
+    const validated = (await updateUserSchema.validate(body, {
+      stripUnknown: true,
+    })) as UpdateUserInput;
+    if (validated.email) {
+      validated.email = validated.email.toLowerCase();
+    }
 
-    const service = new DynamoDBService(docClient, tableName, "");
-    const updated = await service.updateUser(user_id, body as UpdateUserInput);
+    if (jwtUser.role !== "admin") {
+      delete validated.role;
+      delete validated.verification_status;
+      delete validated.verifiedAt;
+      delete validated.verifiedBy;
+    }
+
+    const service = new DynamoDBService(docClient, tableName, tableName);
+    const updated = await service.updateUser(user_id, validated);
 
     if (!updated) {
       return {
@@ -85,7 +89,7 @@ export const updateUser = async (
       body: JSON.stringify({
         status: 200,
         message: "User updated successfully",
-        data: updated,
+        data: toPublicUser(updated),
       }),
     };
   } catch (error) {

@@ -2,23 +2,13 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { handleError, headers } from "../../utils/error-handler";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
+import { getTableName } from "../../utils/env";
 
 export const getShipmentByTracking = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
-
-    if (!tableName) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          status: 500,
-          message: "SHIPMENT_DYNAMO_TABLE environment variable is not set.",
-        }),
-      };
-    }
+    const tableName = getTableName();
 
     // Get tracking number from query string or path parameters
     const tracking_number =
@@ -36,7 +26,7 @@ export const getShipmentByTracking = async (
       };
     }
 
-    const service = new DynamoDBService(docClient, "", tableName);
+    const service = new DynamoDBService(docClient, tableName, tableName);
 
     // Fetch shipment metadata
     const shipment = await service.getShipmentByTrackingNumber(tracking_number);

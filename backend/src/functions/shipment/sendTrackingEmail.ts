@@ -5,6 +5,7 @@ import { sendTrackingEmail } from "../../utils/email";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { requireAuth } from "../../utils/auth";
+import { getTableName } from "../../utils/env";
 
 export const sendTrackingEmailHandler = async (
   event: APIGatewayProxyEvent
@@ -20,18 +21,7 @@ export const sendTrackingEmailHandler = async (
         body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
       };
     }
-    const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
-
-    if (!tableName) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          status: 500,
-          message: "SHIPMENT_DYNAMO_TABLE environment variable is not set.",
-        }),
-      };
-    }
+    const tableName = getTableName();
 
     // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
@@ -50,7 +40,7 @@ export const sendTrackingEmailHandler = async (
     }
 
     // Optionally, verify the shipment exists
-    const service = new DynamoDBService(docClient, "", tableName);
+    const service = new DynamoDBService(docClient, tableName, tableName);
     const shipment = await service.getShipmentByTrackingNumber(tracking_number);
 
     if (!shipment) {

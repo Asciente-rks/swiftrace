@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/handler.js",
-    "dev": "ts-node src/handler.ts"
+    "dev": "ts-node src/handler.ts",
+    "seed": "ts-node seed.ts"
   },
   "dependencies": {
     "aws-sdk": "^2.1693.0",
@@ -21,6 +22,7 @@
     "@types/node": "^20.19.39",
     "@types/jsonwebtoken": "^9.0.1",
     "@types/nodemailer": "^6.4.7",
+    "serverless-dotenv-plugin": "^6.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

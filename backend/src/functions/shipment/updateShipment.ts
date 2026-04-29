@@ -4,15 +4,19 @@ import { handleError, headers } from "../../utils/error-handler";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { requireAuth } from "../../utils/auth";
-import type { UpdateShipmentInput } from "../../types/shipment";
+import { getTableName } from "../../utils/env";
+import { updateShipmentSchema } from "../../validation/shipment-validation";
+import type { UpdateShipmentInput, ShipmentStatus } from "../../types/shipment";
+import type { ShipmentHistoryType } from "../../types/history";
 
 export const updateShipment = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     // JWT authentication
+    let jwtUser;
     try {
-      requireAuth(event);
+      jwtUser = requireAuth(event);
     } catch (err: any) {
       return {
         statusCode: err.statusCode || 401,
@@ -20,18 +24,14 @@ export const updateShipment = async (
         body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
       };
     }
-    const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
-
-    if (!tableName) {
+    if (jwtUser.role !== "admin" && jwtUser.role !== "shipper") {
       return {
-        statusCode: 500,
+        statusCode: 403,
         headers,
-        body: JSON.stringify({
-          status: 500,
-          message: "SHIPMENT_DYNAMO_TABLE environment variable is not set.",
-        }),
+        body: JSON.stringify({ status: 403, message: "Forbidden: Insufficient role" }),
       };
     }
+    const tableName = getTableName();
 
     // Get shipment_id from path or query
     const shipment_id =
@@ -51,10 +51,37 @@ export const updateShipment = async (
 
     // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
-    // Optionally: validate with a schema here
+    const validated = (await updateShipmentSchema.validate(body, {
+      stripUnknown: true,
+    })) as UpdateShipmentInput;
 
-    const service = new DynamoDBService(docClient, "", tableName);
-    const updated = await service.updateShipment(shipment_id, body as UpdateShipmentInput);
+    const historyDetails =
+      typeof body?.details === "string" ? (body.details as string) : undefined;
+
+    let updateInput: UpdateShipmentInput = validated;
+    if (jwtUser.role === "shipper") {
+      updateInput = {};
+      if (validated.current_location) {
+        updateInput.current_location = validated.current_location;
+      }
+      if (validated.status_) {
+        updateInput.status_ = validated.status_ as ShipmentStatus;
+      }
+    }
+
+    if (jwtUser.role === "shipper" && !updateInput.current_location && !updateInput.status_) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          status: 400,
+          message: "No updatable fields provided.",
+        }),
+      };
+    }
+
+    const service = new DynamoDBService(docClient, tableName, tableName);
+    const updated = await service.updateShipment(shipment_id, updateInput);
 
     if (!updated) {
       return {
@@ -65,6 +92,25 @@ export const updateShipment = async (
           message: "Shipment not found.",
         }),
       };
+    }
+
+    if (updateInput.status_ || updateInput.current_location) {
+      let historyType: ShipmentHistoryType = "in_transit";
+      if (updateInput.status_) {
+        if (updateInput.status_ === "preparing") {
+          historyType = "picked_up";
+        } else {
+          historyType = updateInput.status_ as ShipmentHistoryType;
+        }
+      }
+
+      await service.createShipmentHistory({
+        tracking_number: updated.tracking_number,
+        historyType,
+        status: updated.status_,
+        current_location: updated.current_location,
+        details: historyDetails ?? `Shipment updated by ${jwtUser.role}.`,
+      });
     }
 
     return {

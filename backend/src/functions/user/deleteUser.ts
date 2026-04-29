@@ -3,6 +3,7 @@ import { handleError, headers } from "../../utils/error-handler";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { requireAuth, requireRole } from "../../utils/auth";
+import { getTableName } from "../../utils/env";
 
 export const deleteUser = async (
   event: APIGatewayProxyEvent
@@ -20,18 +21,7 @@ export const deleteUser = async (
         body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
       };
     }
-    const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
-
-    if (!tableName) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          status: 500,
-          message: "SHIPMENT_DYNAMO_TABLE environment variable is not set.",
-        }),
-      };
-    }
+    const tableName = getTableName();
 
     // Get user_id from path or query
     const user_id =
@@ -49,7 +39,7 @@ export const deleteUser = async (
       };
     }
 
-    const service = new DynamoDBService(docClient, tableName, "");
+    const service = new DynamoDBService(docClient, tableName, tableName);
     const deleted = await service.deleteUser(user_id);
 
     if (!deleted) {

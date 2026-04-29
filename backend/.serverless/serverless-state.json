@@ -1,0 +1,3428 @@
+{
+  "service": {
+    "service": "swiftrace",
+    "serviceObject": {
+      "name": "swiftrace"
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs20.x",
+      "region": "ap-southeast-1",
+      "stage": "dev",
+      "environment": {
+        "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+        "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+        "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+        "JWT_EXPIRES_IN": "7d",
+        "EMAIL_USER": "ascientehub@gmail.com",
+        "EMAIL_PASS": "icbyknaukkfsasze",
+        "DEFAULT_ORIGIN": "Warehouse"
+      },
+      "iam": {
+        "role": {
+          "statements": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:UpdateItem"
+              ],
+              "Resource": [
+                "arn:aws:dynamodb:ap-southeast-1:485944704031:table/swiftrace-logistics-dev",
+                "arn:aws:dynamodb:ap-southeast-1:485944704031:table/swiftrace-logistics-dev/index/*"
+              ]
+            }
+          ]
+        }
+      },
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "CreateUserLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-createUser"
+            }
+          },
+          "LoginUserLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-loginUser"
+            }
+          },
+          "UpdateUserLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-updateUser"
+            }
+          },
+          "DeleteUserLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-deleteUser"
+            }
+          },
+          "GetUsersByRoleLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-getUsersByRole"
+            }
+          },
+          "PlaceSampleOrderLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-placeSampleOrder"
+            }
+          },
+          "CreateShipmentLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-createShipment"
+            }
+          },
+          "UpdateShipmentLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-updateShipment"
+            }
+          },
+          "GetShipmentByTrackingLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-getShipmentByTracking"
+            }
+          },
+          "GetShipmentHistoryForUserLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-getShipmentHistoryForUser"
+            }
+          },
+          "GetShipmentsByStatusLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-getShipmentsByStatus"
+            }
+          },
+          "SendTrackingEmailLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/swiftrace-dev-sendTrackingEmail"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "swiftrace",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/swiftrace-dev*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/swiftrace-dev*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "$[\"service\"][\"provider\"][\"iam\"][\"role\"][\"statements\"][0]"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "swiftrace",
+                    "dev",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "CreateUserLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/user/createUser.registerUser",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-createUser",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "CreateUserLogGroup"
+            ]
+          },
+          "LoginUserLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/user/loginUser.loginUser",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-loginUser",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "LoginUserLogGroup"
+            ]
+          },
+          "UpdateUserLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/user/updateUser.updateUser",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-updateUser",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "UpdateUserLogGroup"
+            ]
+          },
+          "DeleteUserLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/user/deleteUser.deleteUser",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-deleteUser",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "DeleteUserLogGroup"
+            ]
+          },
+          "GetUsersByRoleLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/user/getUserByRole.getUsersByRole",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-getUsersByRole",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetUsersByRoleLogGroup"
+            ]
+          },
+          "PlaceSampleOrderLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/shipment/placeSampleOrder.placeSampleOrder",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-placeSampleOrder",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "PlaceSampleOrderLogGroup"
+            ]
+          },
+          "CreateShipmentLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/shipment/createShipment.createShipment",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-createShipment",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "CreateShipmentLogGroup"
+            ]
+          },
+          "UpdateShipmentLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/shipment/updateShipment.updateShipment",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-updateShipment",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "UpdateShipmentLogGroup"
+            ]
+          },
+          "GetShipmentByTrackingLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/shipment/getShipmentByTracking.getShipmentByTracking",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-getShipmentByTracking",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetShipmentByTrackingLogGroup"
+            ]
+          },
+          "GetShipmentHistoryForUserLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/shipment/getShipmentHistory.getShipmentHistoryForUser",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-getShipmentHistoryForUser",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetShipmentHistoryForUserLogGroup"
+            ]
+          },
+          "GetShipmentsByStatusLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/shipment/getShipmentByStatus.getShipmentsByStatus",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-getShipmentsByStatus",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetShipmentsByStatusLogGroup"
+            ]
+          },
+          "SendTrackingEmailLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z/swiftrace.zip"
+              },
+              "Handler": "dist/src/functions/shipment/sendTrackingEmail.sendTrackingEmailHandler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "swiftrace-dev-sendTrackingEmail",
+              "MemorySize": 1024,
+              "Timeout": 29,
+              "Environment": {
+                "Variables": {
+                  "LOGISTICS_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "SHIPMENT_DYNAMO_TABLE": "swiftrace-logistics-dev",
+                  "JWT_SECRET": "B765AD56as5ASadA76TDshjadsAJUDG76",
+                  "JWT_EXPIRES_IN": "7d",
+                  "EMAIL_USER": "ascientehub@gmail.com",
+                  "EMAIL_PASS": "icbyknaukkfsasze",
+                  "DEFAULT_ORIGIN": "Warehouse"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "SendTrackingEmailLogGroup"
+            ]
+          },
+          "CreateUserLambdaVersionpu554DBi3ixVbTfKxUJMcFJyjafE7go3TpgZthFTQ": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CreateUserLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "LoginUserLambdaVersionsnu1Gu5KtdK7MS6lGpD0Q45k1OEZLhVD3C5cdqa4zw": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "LoginUserLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "UpdateUserLambdaVersion4HmaRnVvpUngevcAPzbzOODzzBlRjReugC2OkcqI9yc": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "UpdateUserLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "DeleteUserLambdaVersionvXwHvbBSk9oUdUJe0VHBMOaKnYLMRZDLvc01cyQ": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "DeleteUserLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "GetUsersByRoleLambdaVersionGGZSyXPz45fSAbVTBz9tUe1b42NbkVkeLc96vAmE4ZE": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetUsersByRoleLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "PlaceSampleOrderLambdaVersionENEpwHtIy3xkEthbk7TOvrkQtfCjm4G8RryO9CC3do": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "PlaceSampleOrderLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "CreateShipmentLambdaVersionPCgvKzgzG9pVMcBF1NAi4PibOBbNlFIw1yvCbz1nF4": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CreateShipmentLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "UpdateShipmentLambdaVersionOXgOLxGSky34CXRwMCZ3ov4MjllqetmIvl8FRDKwPs": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "UpdateShipmentLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "GetShipmentByTrackingLambdaVersionPsxmjNQmn1qb2d3D1NTjvhmb1MpPmiW0aHOiPavE": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetShipmentByTrackingLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "GetShipmentHistoryForUserLambdaVersionLDJQR11rpHw6RDChax8I1n0hviyK9VN8K704ULMX8": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetShipmentHistoryForUserLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "GetShipmentsByStatusLambdaVersionqv4BdHZre3GfClPxm1qNMy6mDOWp9pFdWSUx6cmK4": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetShipmentsByStatusLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "SendTrackingEmailLambdaVersionXmoyDMgAEqvWDt4p3avRIYkzHdGB69KADP3NDMjuo": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "SendTrackingEmailLambdaFunction"
+              },
+              "CodeSha256": "rMoN0X/Of7Y2hq5Wb90o1mowCzy9gEOm5uUXo3XuuEc="
+            }
+          },
+          "ApiGatewayRestApi": {
+            "Type": "AWS::ApiGateway::RestApi",
+            "Properties": {
+              "Name": "dev-swiftrace",
+              "EndpointConfiguration": {
+                "Types": [
+                  "EDGE"
+                ]
+              },
+              "Policy": ""
+            }
+          },
+          "ApiGatewayResourceUsers": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "users",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceUsersUseridVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceUsers"
+              },
+              "PathPart": "{user_id}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAuth": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "auth",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAuthLogin": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceAuth"
+              },
+              "PathPart": "login",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceOrders": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "orders",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceOrdersSample": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceOrders"
+              },
+              "PathPart": "sample",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipments": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "shipments",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipmentsShipmentidVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceShipments"
+              },
+              "PathPart": "{shipment_id}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipmentsTracking": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceShipments"
+              },
+              "PathPart": "tracking",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipmentsTrackingTrackingnumberVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceShipmentsTracking"
+              },
+              "PathPart": "{tracking_number}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipmentsTrackingEmail": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceShipmentsTracking"
+              },
+              "PathPart": "email",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipmentsTrackingnumberVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceShipments"
+              },
+              "PathPart": "{tracking_number}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipmentsTrackingnumberVarHistory": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceShipmentsTrackingnumberVar"
+              },
+              "PathPart": "history",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipmentsStatus": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceShipments"
+              },
+              "PathPart": "status",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceShipmentsStatusStatusVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceShipmentsStatus"
+              },
+              "PathPart": "{status_}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodUsersOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsers"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodAuthLoginOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAuthLogin"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodUsersUseridVarOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,DELETE,PUT'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsersUseridVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodOrdersSampleOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceOrdersSample"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodShipmentsOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipments"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodShipmentsShipmentidVarOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,PUT'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsShipmentidVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodShipmentsTrackingTrackingnumberVarOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsTrackingTrackingnumberVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodShipmentsTrackingnumberVarHistoryOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsTrackingnumberVarHistory"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodShipmentsStatusStatusVarOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsStatusStatusVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodShipmentsTrackingEmailOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsTrackingEmail"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodUsersPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsers"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "CreateUserLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "CreateUserLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodAuthLoginPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAuthLogin"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "LoginUserLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "LoginUserLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodUsersUseridVarPut": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "PUT",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsersUseridVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "UpdateUserLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "UpdateUserLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodUsersUseridVarDelete": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "DELETE",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsersUseridVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "DeleteUserLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "DeleteUserLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodUsersGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsers"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetUsersByRoleLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "GetUsersByRoleLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodOrdersSamplePost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceOrdersSample"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "PlaceSampleOrderLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "PlaceSampleOrderLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodShipmentsPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipments"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "CreateShipmentLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "CreateShipmentLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodShipmentsShipmentidVarPut": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "PUT",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsShipmentidVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "UpdateShipmentLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "UpdateShipmentLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodShipmentsTrackingTrackingnumberVarGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsTrackingTrackingnumberVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetShipmentByTrackingLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "GetShipmentByTrackingLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodShipmentsTrackingnumberVarHistoryGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsTrackingnumberVarHistory"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetShipmentHistoryForUserLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "GetShipmentHistoryForUserLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodShipmentsStatusStatusVarGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsStatusStatusVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetShipmentsByStatusLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "GetShipmentsByStatusLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodShipmentsTrackingEmailPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceShipmentsTrackingEmail"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "SendTrackingEmailLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "SendTrackingEmailLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1777434835546": {
+            "Type": "AWS::ApiGateway::Deployment",
+            "Properties": {
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "StageName": "dev"
+            },
+            "DependsOn": [
+              "ApiGatewayMethodUsersOptions",
+              "ApiGatewayMethodAuthLoginOptions",
+              "ApiGatewayMethodUsersUseridVarOptions",
+              "ApiGatewayMethodOrdersSampleOptions",
+              "ApiGatewayMethodShipmentsOptions",
+              "ApiGatewayMethodShipmentsShipmentidVarOptions",
+              "ApiGatewayMethodShipmentsTrackingTrackingnumberVarOptions",
+              "ApiGatewayMethodShipmentsTrackingnumberVarHistoryOptions",
+              "ApiGatewayMethodShipmentsStatusStatusVarOptions",
+              "ApiGatewayMethodShipmentsTrackingEmailOptions",
+              "ApiGatewayMethodUsersPost",
+              "ApiGatewayMethodAuthLoginPost",
+              "ApiGatewayMethodUsersUseridVarPut",
+              "ApiGatewayMethodUsersUseridVarDelete",
+              "ApiGatewayMethodUsersGet",
+              "ApiGatewayMethodOrdersSamplePost",
+              "ApiGatewayMethodShipmentsPost",
+              "ApiGatewayMethodShipmentsShipmentidVarPut",
+              "ApiGatewayMethodShipmentsTrackingTrackingnumberVarGet",
+              "ApiGatewayMethodShipmentsTrackingnumberVarHistoryGet",
+              "ApiGatewayMethodShipmentsStatusStatusVarGet",
+              "ApiGatewayMethodShipmentsTrackingEmailPost"
+            ]
+          },
+          "CreateUserLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "CreateUserLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "LoginUserLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "LoginUserLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "UpdateUserLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "UpdateUserLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "DeleteUserLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "DeleteUserLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetUsersByRoleLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetUsersByRoleLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "PlaceSampleOrderLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "PlaceSampleOrderLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "CreateShipmentLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "CreateShipmentLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "UpdateShipmentLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "UpdateShipmentLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetShipmentByTrackingLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetShipmentByTrackingLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetShipmentHistoryForUserLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetShipmentHistoryForUserLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetShipmentsByStatusLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetShipmentsByStatusLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "SendTrackingEmailLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "SendTrackingEmailLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "LogisticsTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+              "TableName": "swiftrace-logistics-dev",
+              "BillingMode": "PAY_PER_REQUEST",
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "PK",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "SK",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "role",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "createdAt",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "status_",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "updatedAt",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "shipment_id",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "tracking_number",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "PK",
+                  "KeyType": "HASH"
+                },
+                {
+                  "AttributeName": "SK",
+                  "KeyType": "RANGE"
+                }
+              ],
+              "GlobalSecondaryIndexes": [
+                {
+                  "IndexName": "role-createdAt-index",
+                  "KeySchema": [
+                    {
+                      "AttributeName": "role",
+                      "KeyType": "HASH"
+                    },
+                    {
+                      "AttributeName": "createdAt",
+                      "KeyType": "RANGE"
+                    }
+                  ],
+                  "Projection": {
+                    "ProjectionType": "ALL"
+                  }
+                },
+                {
+                  "IndexName": "status-updatedAt-index",
+                  "KeySchema": [
+                    {
+                      "AttributeName": "status_",
+                      "KeyType": "HASH"
+                    },
+                    {
+                      "AttributeName": "updatedAt",
+                      "KeyType": "RANGE"
+                    }
+                  ],
+                  "Projection": {
+                    "ProjectionType": "ALL"
+                  }
+                },
+                {
+                  "IndexName": "shipmentId-index",
+                  "KeySchema": [
+                    {
+                      "AttributeName": "shipment_id",
+                      "KeyType": "HASH"
+                    }
+                  ],
+                  "Projection": {
+                    "ProjectionType": "ALL"
+                  }
+                },
+                {
+                  "IndexName": "trackingNumber-index",
+                  "KeySchema": [
+                    {
+                      "AttributeName": "tracking_number",
+                      "KeyType": "HASH"
+                    }
+                  ],
+                  "Projection": {
+                    "ProjectionType": "ALL"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-ServerlessDeploymentBucketName"
+            }
+          },
+          "CreateUserLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "CreateUserLambdaVersionpu554DBi3ixVbTfKxUJMcFJyjafE7go3TpgZthFTQ"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-CreateUserLambdaFunctionQualifiedArn"
+            }
+          },
+          "LoginUserLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "LoginUserLambdaVersionsnu1Gu5KtdK7MS6lGpD0Q45k1OEZLhVD3C5cdqa4zw"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-LoginUserLambdaFunctionQualifiedArn"
+            }
+          },
+          "UpdateUserLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "UpdateUserLambdaVersion4HmaRnVvpUngevcAPzbzOODzzBlRjReugC2OkcqI9yc"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-UpdateUserLambdaFunctionQualifiedArn"
+            }
+          },
+          "DeleteUserLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "DeleteUserLambdaVersionvXwHvbBSk9oUdUJe0VHBMOaKnYLMRZDLvc01cyQ"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-DeleteUserLambdaFunctionQualifiedArn"
+            }
+          },
+          "GetUsersByRoleLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetUsersByRoleLambdaVersionGGZSyXPz45fSAbVTBz9tUe1b42NbkVkeLc96vAmE4ZE"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-GetUsersByRoleLambdaFunctionQualifiedArn"
+            }
+          },
+          "PlaceSampleOrderLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "PlaceSampleOrderLambdaVersionENEpwHtIy3xkEthbk7TOvrkQtfCjm4G8RryO9CC3do"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-PlaceSampleOrderLambdaFunctionQualifiedArn"
+            }
+          },
+          "CreateShipmentLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "CreateShipmentLambdaVersionPCgvKzgzG9pVMcBF1NAi4PibOBbNlFIw1yvCbz1nF4"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-CreateShipmentLambdaFunctionQualifiedArn"
+            }
+          },
+          "UpdateShipmentLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "UpdateShipmentLambdaVersionOXgOLxGSky34CXRwMCZ3ov4MjllqetmIvl8FRDKwPs"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-UpdateShipmentLambdaFunctionQualifiedArn"
+            }
+          },
+          "GetShipmentByTrackingLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetShipmentByTrackingLambdaVersionPsxmjNQmn1qb2d3D1NTjvhmb1MpPmiW0aHOiPavE"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-GetShipmentByTrackingLambdaFunctionQualifiedArn"
+            }
+          },
+          "GetShipmentHistoryForUserLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetShipmentHistoryForUserLambdaVersionLDJQR11rpHw6RDChax8I1n0hviyK9VN8K704ULMX8"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-GetShipmentHistoryForUserLambdaFunctionQualifiedArn"
+            }
+          },
+          "GetShipmentsByStatusLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetShipmentsByStatusLambdaVersionqv4BdHZre3GfClPxm1qNMy6mDOWp9pFdWSUx6cmK4"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-GetShipmentsByStatusLambdaFunctionQualifiedArn"
+            }
+          },
+          "SendTrackingEmailLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "SendTrackingEmailLambdaVersionXmoyDMgAEqvWDt4p3avRIYkzHdGB69KADP3NDMjuo"
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-SendTrackingEmailLambdaFunctionQualifiedArn"
+            }
+          },
+          "ServiceEndpoint": {
+            "Description": "URL of the service endpoint",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix"
+                  },
+                  "/dev"
+                ]
+              ]
+            },
+            "Export": {
+              "Name": "sls-swiftrace-dev-ServiceEndpoint"
+            }
+          },
+          "LogisticsTableName": {
+            "Value": "swiftrace-logistics-dev"
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "plugins": [
+      "serverless-dotenv-plugin"
+    ],
+    "pluginsData": {},
+    "functions": {
+      "createUser": {
+        "handler": "dist/src/functions/user/createUser.registerUser",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "users",
+              "method": "post",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-createUser",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "CreateUserLambdaVersionpu554DBi3ixVbTfKxUJMcFJyjafE7go3TpgZthFTQ"
+      },
+      "loginUser": {
+        "handler": "dist/src/functions/user/loginUser.loginUser",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "auth/login",
+              "method": "post",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-loginUser",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "LoginUserLambdaVersionsnu1Gu5KtdK7MS6lGpD0Q45k1OEZLhVD3C5cdqa4zw"
+      },
+      "updateUser": {
+        "handler": "dist/src/functions/user/updateUser.updateUser",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "users/{user_id}",
+              "method": "put",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "PUT"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-updateUser",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "UpdateUserLambdaVersion4HmaRnVvpUngevcAPzbzOODzzBlRjReugC2OkcqI9yc"
+      },
+      "deleteUser": {
+        "handler": "dist/src/functions/user/deleteUser.deleteUser",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "users/{user_id}",
+              "method": "delete",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "DELETE"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-deleteUser",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "DeleteUserLambdaVersionvXwHvbBSk9oUdUJe0VHBMOaKnYLMRZDLvc01cyQ"
+      },
+      "getUsersByRole": {
+        "handler": "dist/src/functions/user/getUserByRole.getUsersByRole",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "users",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-getUsersByRole",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "GetUsersByRoleLambdaVersionGGZSyXPz45fSAbVTBz9tUe1b42NbkVkeLc96vAmE4ZE"
+      },
+      "placeSampleOrder": {
+        "handler": "dist/src/functions/shipment/placeSampleOrder.placeSampleOrder",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "orders/sample",
+              "method": "post",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-placeSampleOrder",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "PlaceSampleOrderLambdaVersionENEpwHtIy3xkEthbk7TOvrkQtfCjm4G8RryO9CC3do"
+      },
+      "createShipment": {
+        "handler": "dist/src/functions/shipment/createShipment.createShipment",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "shipments",
+              "method": "post",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-createShipment",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "CreateShipmentLambdaVersionPCgvKzgzG9pVMcBF1NAi4PibOBbNlFIw1yvCbz1nF4"
+      },
+      "updateShipment": {
+        "handler": "dist/src/functions/shipment/updateShipment.updateShipment",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "shipments/{shipment_id}",
+              "method": "put",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "PUT"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-updateShipment",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "UpdateShipmentLambdaVersionOXgOLxGSky34CXRwMCZ3ov4MjllqetmIvl8FRDKwPs"
+      },
+      "getShipmentByTracking": {
+        "handler": "dist/src/functions/shipment/getShipmentByTracking.getShipmentByTracking",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "shipments/tracking/{tracking_number}",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-getShipmentByTracking",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "GetShipmentByTrackingLambdaVersionPsxmjNQmn1qb2d3D1NTjvhmb1MpPmiW0aHOiPavE"
+      },
+      "getShipmentHistoryForUser": {
+        "handler": "dist/src/functions/shipment/getShipmentHistory.getShipmentHistoryForUser",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "shipments/{tracking_number}/history",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-getShipmentHistoryForUser",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "GetShipmentHistoryForUserLambdaVersionLDJQR11rpHw6RDChax8I1n0hviyK9VN8K704ULMX8"
+      },
+      "getShipmentsByStatus": {
+        "handler": "dist/src/functions/shipment/getShipmentByStatus.getShipmentsByStatus",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "shipments/status/{status_}",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-getShipmentsByStatus",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "GetShipmentsByStatusLambdaVersionqv4BdHZre3GfClPxm1qNMy6mDOWp9pFdWSUx6cmK4"
+      },
+      "sendTrackingEmail": {
+        "handler": "dist/src/functions/shipment/sendTrackingEmail.sendTrackingEmailHandler",
+        "timeout": 29,
+        "events": [
+          {
+            "http": {
+              "path": "shipments/tracking/email",
+              "method": "post",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "swiftrace-dev-sendTrackingEmail",
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "SendTrackingEmailLambdaVersionXmoyDMgAEqvWDt4p3avRIYkzHdGB69KADP3NDMjuo"
+      }
+    },
+    "resources": {
+      "Resources": {
+        "LogisticsTable": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "swiftrace-logistics-dev",
+            "BillingMode": "PAY_PER_REQUEST",
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "PK",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "SK",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "role",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "createdAt",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "status_",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "shipment_id",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "tracking_number",
+                "AttributeType": "S"
+              }
+            ],
+            "KeySchema": [
+              {
+                "AttributeName": "PK",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "SK",
+                "KeyType": "RANGE"
+              }
+            ],
+            "GlobalSecondaryIndexes": [
+              {
+                "IndexName": "role-createdAt-index",
+                "KeySchema": [
+                  {
+                    "AttributeName": "role",
+                    "KeyType": "HASH"
+                  },
+                  {
+                    "AttributeName": "createdAt",
+                    "KeyType": "RANGE"
+                  }
+                ],
+                "Projection": {
+                  "ProjectionType": "ALL"
+                }
+              },
+              {
+                "IndexName": "status-updatedAt-index",
+                "KeySchema": [
+                  {
+                    "AttributeName": "status_",
+                    "KeyType": "HASH"
+                  },
+                  {
+                    "AttributeName": "updatedAt",
+                    "KeyType": "RANGE"
+                  }
+                ],
+                "Projection": {
+                  "ProjectionType": "ALL"
+                }
+              },
+              {
+                "IndexName": "shipmentId-index",
+                "KeySchema": [
+                  {
+                    "AttributeName": "shipment_id",
+                    "KeyType": "HASH"
+                  }
+                ],
+                "Projection": {
+                  "ProjectionType": "ALL"
+                }
+              },
+              {
+                "IndexName": "trackingNumber-index",
+                "KeySchema": [
+                  {
+                    "AttributeName": "tracking_number",
+                    "KeyType": "HASH"
+                  }
+                ],
+                "Projection": {
+                  "ProjectionType": "ALL"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "Outputs": {
+        "LogisticsTableName": {
+          "Value": "swiftrace-logistics-dev"
+        }
+      }
+    },
+    "configValidationMode": "warn",
+    "serviceFilename": "serverless.yml",
+    "initialServerlessConfig": {
+      "service": "swiftrace",
+      "frameworkVersion": ">=3",
+      "useDotenv": true,
+      "plugins": {
+        "$ref": "$[\"service\"][\"plugins\"]"
+      },
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "functions": {
+        "$ref": "$[\"service\"][\"functions\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
+      }
+    },
+    "layers": {},
+    "isDashboardMonitoringPreconfigured": false,
+    "artifact": "C:\\Users\\User\\Documents\\swiftrace\\backend\\.serverless\\swiftrace.zip"
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/swiftrace/dev/1777434848450-2026-04-29T03:54:08.450Z",
+    "artifact": "swiftrace.zip"
+  }
+}

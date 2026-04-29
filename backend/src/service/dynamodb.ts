@@ -18,6 +18,7 @@ import type {
   ShipmentHistoryResponse,
   ShipmentHistoryItem,
 } from "../types/history";
+import { hashPassword } from "../utils/password";
 
 // GSI Index Names
 export const ROLE_CREATED_INDEX = "role-createdAt-index";
@@ -83,11 +84,13 @@ export class DynamoDBService {
     const timestamp = new Date().toISOString();
 
     const role: UserRole = input.role ?? "customer";
+    const { password, ...rest } = input;
 
     const user: User = {
       user_id: randomUUID(),
-      ...input,
+      ...rest,
       role,
+      password_hash: hashPassword(password),
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -121,9 +124,12 @@ export class DynamoDBService {
     const record = result.Item as UserRecord | undefined;
     if (!record) return null;
 
+    const currentUser = this.recordToUser(record);
+    const { password, ...rest } = input;
     const updatedUser: User = {
-      ...this.recordToUser(record),
-      ...input,
+      ...currentUser,
+      ...rest,
+      password_hash: password ? hashPassword(password) : currentUser.password_hash,
       updatedAt: new Date().toISOString(),
     };
 
@@ -136,6 +142,43 @@ export class DynamoDBService {
       })
       .promise();
     return updatedUser;
+  }
+
+  async getUserById(user_id: string): Promise<User | null> {
+    const result = await this.docClient
+      .get({
+        TableName: this.userTableName,
+        Key: {
+          PK: `${USER_PREFIX}${user_id}`,
+          SK: USER_SK_METADATA,
+        },
+      })
+      .promise();
+
+    const record = result.Item as UserRecord | undefined;
+    return record ? this.recordToUser(record) : null;
+  }
+
+  async getUserByEmail(email: string): Promise<User | null> {
+    const users = await this.scanUsersByEmail(email);
+    return users[0] || null;
+  }
+
+  async scanUsersByEmail(email: string): Promise<User[]> {
+    const result = await this.docClient
+      .scan({
+        TableName: this.userTableName,
+        FilterExpression: "begins_with(PK, :userPrefix) AND #email = :email",
+        ExpressionAttributeNames: { "#email": "email" },
+        ExpressionAttributeValues: {
+          ":userPrefix": USER_PREFIX,
+          ":email": email,
+        },
+      })
+      .promise();
+
+    const records = result.Items as UserRecord[] | undefined;
+    return records ? records.map(r => this.recordToUser(r)) : [];
   }
 
   async deleteUser(user_id: string): Promise<boolean> {
@@ -297,18 +340,20 @@ export class DynamoDBService {
 
   //user control, get 1 shipment per tracking number
   async getShipmentByTrackingNumber(tracking_number: string): Promise<Shipment | null> {
-    // Get the shipment directly using the main table PK (tracking_number)
     const result = await this.docClient
-      .get({
+      .scan({
         TableName: this.shipmentTableName,
-        Key: {
-          PK: `${SHIPMENT_PREFIX}${tracking_number}`,
-          SK: SHIPMENT_SK_METADATA,
+        FilterExpression: "begins_with(PK, :shipmentPrefix) AND #tracking_number = :tracking_number",
+        ExpressionAttributeNames: { "#tracking_number": "tracking_number" },
+        ExpressionAttributeValues: {
+          ":shipmentPrefix": "SHIPMENT#",
+          ":tracking_number": tracking_number,
         },
+        Limit: 1,
       })
       .promise();
 
-    const record = result.Item as ShipmentRecord | undefined;
+    const record = result.Items?.[0] as ShipmentRecord | undefined;
     return record ? this.recordToShipment(record) : null;
   }
   
@@ -347,7 +392,7 @@ export class DynamoDBService {
       .put({
         TableName: this.shipmentTableName,
         Item: record as unknown as Record<string, unknown>,
-        ConditionExpression: "attribute_not_exists(PK) AND attribute_not_exists(SK)",
+        ConditionExpression: "attribute_not_exists(SK)",
       })
       .promise();
 
@@ -382,5 +427,23 @@ export class DynamoDBService {
       .promise();
 
     return ((result.Items as ShipmentHistoryRecord[]) ?? []).map((r) => this.recordToHistoryResponse(r));
+  }
+
+  async getShipmentsByCustomerId(customer_id: string): Promise<Shipment[]> {
+    const result = await this.docClient
+      .scan({
+        TableName: this.shipmentTableName,
+        FilterExpression: "begins_with(PK, :shipPrefix) AND #customer_id = :customer_id",
+        ExpressionAttributeNames: { "#customer_id": "customer_id" },
+        ExpressionAttributeValues: {
+          ":shipPrefix": SHIPMENT_PREFIX,
+          ":customer_id": customer_id,
+        },
+      })
+      .promise();
+
+    return ((result.Items as ShipmentRecord[]) ?? []).map((record) =>
+      this.recordToShipment(record),
+    );
   }
 }

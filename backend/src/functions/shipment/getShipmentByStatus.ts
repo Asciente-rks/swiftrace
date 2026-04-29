@@ -3,6 +3,7 @@ import { handleError, headers } from "../../utils/error-handler";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { requireAuth, requireRole } from "../../utils/auth";
+import { getTableName } from "../../utils/env";
 import type { ShipmentStatus } from "../../types/shipment";
 
 export const getShipmentsByStatus = async (
@@ -13,7 +14,9 @@ export const getShipmentsByStatus = async (
     let jwtUser;
     try {
       jwtUser = requireAuth(event);
-      requireRole(jwtUser, "admin");
+      if (jwtUser.role !== "admin" && jwtUser.role !== "shipper") {
+        requireRole(jwtUser, "admin");
+      }
     } catch (err: any) {
       return {
         statusCode: err.statusCode || 401,
@@ -21,18 +24,7 @@ export const getShipmentsByStatus = async (
         body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
       };
     }
-    const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
-
-    if (!tableName) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          status: 500,
-          message: "SHIPMENT_DYNAMO_TABLE environment variable is not set.",
-        }),
-      };
-    }
+    const tableName = getTableName();
 
     // Get status from query string or path parameters
     const status_ = event.queryStringParameters?.status_ || event.pathParameters?.status_;
@@ -51,7 +43,7 @@ export const getShipmentsByStatus = async (
     const sortOrder =
       event.queryStringParameters?.sortOrder === "asc" ? "asc" : "desc";
 
-    const service = new DynamoDBService(docClient, "", tableName);
+    const service = new DynamoDBService(docClient, tableName, tableName);
 
     // Fetch shipments by status
     const shipments = await service.getShipments({ status_: status_ as ShipmentStatus, sortOrder });

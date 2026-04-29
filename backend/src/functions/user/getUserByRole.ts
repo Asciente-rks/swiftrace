@@ -3,6 +3,8 @@ import { handleError, headers } from "../../utils/error-handler";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { requireAuth, requireRole } from "../../utils/auth";
+import { getTableName } from "../../utils/env";
+import { toPublicUser } from "../../utils/user";
 import type { UserRole } from "../../types/user";
 
 export const getUsersByRole = async (
@@ -21,39 +23,15 @@ export const getUsersByRole = async (
         body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
       };
     }
-    const tableName = process.env.SHIPMENT_DYNAMO_TABLE;
+    const tableName = getTableName();
 
-    if (!tableName) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          status: 500,
-          message: "SHIPMENT_DYNAMO_TABLE environment variable is not set.",
-        }),
-      };
-    }
-
-    const role =
-      event.queryStringParameters?.role ||
-      event.pathParameters?.role;
-
-    if (!role) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          status: 400,
-          message: "role is required.",
-        }),
-      };
-    }
+    const role = event.queryStringParameters?.role as UserRole | undefined;
 
     const sortOrder =
       event.queryStringParameters?.sortOrder === "asc" ? "asc" : "desc";
 
-    const service = new DynamoDBService(docClient, tableName, "");
-    const users = await service.getUsers({ role: role as UserRole, sortOrder });
+    const service = new DynamoDBService(docClient, tableName, tableName);
+    const users = await service.getUsers({ role, sortOrder });
 
     return {
       statusCode: 200,
@@ -61,7 +39,7 @@ export const getUsersByRole = async (
       body: JSON.stringify({
         status: 200,
         message: "Users found.",
-        data: users,
+        data: users.map((user) => toPublicUser(user)),
       }),
     };
   } catch (error) {

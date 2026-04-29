@@ -1,0 +1,205 @@
+service: swiftrace
+frameworkVersion: ">=3"
+useDotenv: true
+plugins:
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-southeast-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    LOGISTICS_DYNAMO_TABLE: ${env:LOGISTICS_DYNAMO_TABLE, 'swiftrace-logistics-dev'}
+    SHIPMENT_DYNAMO_TABLE: ${env:SHIPMENT_DYNAMO_TABLE, self:provider.environment.LOGISTICS_DYNAMO_TABLE}
+    JWT_SECRET: ${env:JWT_SECRET}
+    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
+    EMAIL_USER: ${env:EMAIL_USER}
+    EMAIL_PASS: ${env:EMAIL_PASS}
+    DEFAULT_ORIGIN: ${env:DEFAULT_ORIGIN, 'Warehouse'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:UpdateItem
+          Resource:
+            - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.LOGISTICS_DYNAMO_TABLE}
+            - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.LOGISTICS_DYNAMO_TABLE}/index/*
+
+functions:
+  createUser:
+    handler: dist/src/functions/user/createUser.registerUser
+    timeout: 29
+    events:
+      - http:
+          path: /users
+          method: post
+          cors: true
+
+
+  loginUser:
+    handler: dist/src/functions/user/loginUser.loginUser
+    timeout: 29
+    events:
+      - http:
+          path: /auth/login
+          method: post
+          cors: true
+
+  updateUser:
+    handler: dist/src/functions/user/updateUser.updateUser
+    timeout: 29
+    events:
+      - http:
+          path: /users/{user_id}
+          method: put
+          cors: true
+
+
+  deleteUser:
+    handler: dist/src/functions/user/deleteUser.deleteUser
+    timeout: 29
+    events:
+      - http:
+          path: /users/{user_id}
+          method: delete
+          cors: true
+
+  getUsersByRole:
+    handler: dist/src/functions/user/getUserByRole.getUsersByRole
+    timeout: 29
+    events:
+      - http:
+          path: /users
+          method: get
+          cors: true
+
+  placeSampleOrder:
+    handler: dist/src/functions/shipment/placeSampleOrder.placeSampleOrder
+    timeout: 29
+    events:
+      - http:
+          path: /orders/sample
+          method: post
+          cors: true
+
+  createShipment:
+    handler: dist/src/functions/shipment/createShipment.createShipment
+    timeout: 29
+    events:
+      - http:
+          path: /shipments
+          method: post
+          cors: true
+
+  updateShipment:
+    handler: dist/src/functions/shipment/updateShipment.updateShipment
+    timeout: 29
+    events:
+      - http:
+          path: /shipments/{shipment_id}
+          method: put
+          cors: true
+
+  getShipmentByTracking:
+    handler: dist/src/functions/shipment/getShipmentByTracking.getShipmentByTracking
+    timeout: 29
+    events:
+      - http:
+          path: /shipments/tracking/{tracking_number}
+          method: get
+          cors: true
+
+  getShipmentHistoryForUser:
+    handler: dist/src/functions/shipment/getShipmentHistory.getShipmentHistoryForUser
+    timeout: 29
+    events:
+      - http:
+          path: /shipments/{tracking_number}/history
+          method: get
+          cors: true
+
+  getShipmentsByStatus:
+    handler: dist/src/functions/shipment/getShipmentByStatus.getShipmentsByStatus
+    timeout: 29
+    events:
+      - http:
+          path: /shipments/status/{status_}
+          method: get
+          cors: true
+
+  sendTrackingEmail:
+    handler: dist/src/functions/shipment/sendTrackingEmail.sendTrackingEmailHandler
+    timeout: 29
+    events:
+      - http:
+          path: /shipments/tracking/email
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    LogisticsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.LOGISTICS_DYNAMO_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+          - AttributeName: role
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+          - AttributeName: status_
+            AttributeType: S
+          - AttributeName: updatedAt
+            AttributeType: S
+          - AttributeName: shipment_id
+            AttributeType: S
+          - AttributeName: tracking_number
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: role-createdAt-index
+            KeySchema:
+              - AttributeName: role
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: status-updatedAt-index
+            KeySchema:
+              - AttributeName: status_
+                KeyType: HASH
+              - AttributeName: updatedAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: shipmentId-index
+            KeySchema:
+              - AttributeName: shipment_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: trackingNumber-index
+            KeySchema:
+              - AttributeName: tracking_number
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+  Outputs:
+    LogisticsTableName:
+      Value: ${self:provider.environment.LOGISTICS_DYNAMO_TABLE}

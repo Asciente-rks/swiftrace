@@ -13,13 +13,22 @@ export interface User {
   verification_status: UserVerificationStatus;
   verifiedAt?: string;
   verifiedBy?: string;
+  password_hash: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CreateUserInput extends Omit<User, "user_id" | "createdAt" | "updatedAt"> {}
+export interface PublicUser extends Omit<User, "password_hash"> {}
 
-export interface UpdateUserInput extends Partial<Omit<User, "user_id" | "createdAt" | "updatedAt">> {}
+export interface CreateUserInput
+  extends Omit<User, "user_id" | "createdAt" | "updatedAt" | "password_hash"> {
+  password: string;
+}
+
+export interface UpdateUserInput
+  extends Partial<Omit<User, "user_id" | "createdAt" | "updatedAt" | "password_hash">> {
+  password?: string;
+}
 
 export interface RetrieveUserFilters {
   role?: UserRole;

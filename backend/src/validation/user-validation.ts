@@ -6,6 +6,7 @@ export const createUserSchema = yup
   .shape({
     name: yup.string().required("name is required"),
     email: yup.string().email("email must be valid").required("email is required"),
+    password: yup.string().min(8, "password must be at least 8 characters").required("password is required"),
     phone: yup.string().optional(),
     role: yup
       .string()
@@ -29,6 +30,7 @@ export const updateUserSchema = yup
   .shape({
     name: yup.string().optional(),
     email: yup.string().email("email must be valid").optional(),
+    password: yup.string().min(8, "password must be at least 8 characters").optional(),
     phone: yup.string().optional(),
     role: yup.string().oneOf([...USER_ROLES]).optional(),
     verification_status: yup.string().oneOf([...USER_VERIFICATION_STATUSES]).optional(),
