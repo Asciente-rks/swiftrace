@@ -5,16 +5,12 @@ type HeroSectionProps = {
   trackingNumber: string;
   setTrackingNumber: (value: string) => void;
   onTrack: (event: FormEvent<HTMLFormElement>) => void;
-  trackedShipment: any;
-  trackingStatus: 'idle' | 'loading' | 'found' | 'not_found';
 };
 
 const HeroSection = ({
   trackingNumber,
   setTrackingNumber,
   onTrack,
-  trackedShipment,
-  trackingStatus,
 }: HeroSectionProps) => (
   <section className="hero" id="track">
     <div className="hero-copy">
@@ -32,19 +28,18 @@ const HeroSection = ({
       <form className="form" onSubmit={onTrack}>
         <label className="field">
           Tracking number
-            <input
-              type="text"
-              value={trackingNumber}
-              onChange={(event) => setTrackingNumber(event.target.value)}
-              placeholder="SW1714371629903"
-              required
-            />
+          <input
+            type="text"
+            value={trackingNumber}
+            onChange={(event) => setTrackingNumber(event.target.value)}
+            placeholder="SW1714371629903"
+            required
+          />
         </label>
         <button className="btn btn-primary" type="submit">
           Find shipment
         </button>
       </form>
-
     </div>
   </section>
 );

@@ -27,6 +27,7 @@ provider:
             - dynamodb:Query
             - dynamodb:Scan
             - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
           Resource:
             - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.LOGISTICS_DYNAMO_TABLE}
             - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.LOGISTICS_DYNAMO_TABLE}/index/*
@@ -40,7 +41,6 @@ functions:
           path: /users
           method: post
           cors: true
-
 
   loginUser:
     handler: dist/src/functions/user/loginUser.loginUser
@@ -59,7 +59,6 @@ functions:
           path: /users/{user_id}
           method: put
           cors: true
-
 
   deleteUser:
     handler: dist/src/functions/user/deleteUser.deleteUser
@@ -139,6 +138,24 @@ functions:
     events:
       - http:
           path: /shipments/tracking/email
+          method: post
+          cors: true
+
+  seedDatabase:
+    handler: dist/src/functions/dev/seedDatabase.handler
+    timeout: 29
+    events:
+      - http:
+          path: /dev/seed
+          method: post
+          cors: true
+
+  clearDatabase:
+    handler: dist/src/functions/dev/clearDatabase.handler
+    timeout: 29
+    events:
+      - http:
+          path: /dev/clear
           method: post
           cors: true
 

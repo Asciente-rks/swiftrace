@@ -3,12 +3,14 @@ import type { FormEvent } from "react";
 import "./SampleOrderSection.css";
 
 type SampleOrderSectionProps = {
-  apiBase: string;
-  authToken: string;
-  runRequest: (path: string, options: RequestInit, label: string) => Promise<unknown>;
+  runRequest: (
+    path: string,
+    options: RequestInit,
+    label: string,
+  ) => Promise<unknown>;
 };
 
-const SampleOrderSection = ({ apiBase, authToken, runRequest }: SampleOrderSectionProps) => {
+const SampleOrderSection = ({ runRequest }: SampleOrderSectionProps) => {
   const [destination, setDestination] = useState("");
   const [origin, setOrigin] = useState("");
 
@@ -21,7 +23,7 @@ const SampleOrderSection = ({ apiBase, authToken, runRequest }: SampleOrderSecti
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ destination, origin: origin || undefined }),
       },
-      "Sample order"
+      "Sample order",
     );
   };
 

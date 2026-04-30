@@ -10,7 +10,7 @@ import { updateUserSchema } from "../../validation/user-validation";
 import type { UpdateUserInput } from "../../types/user";
 
 export const updateUser = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
     // JWT authentication
@@ -21,7 +21,10 @@ export const updateUser = async (
       return {
         statusCode: err.statusCode || 401,
         headers,
-        body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
+        body: JSON.stringify({
+          status: err.statusCode || 401,
+          message: err.message,
+        }),
       };
     }
 
@@ -29,8 +32,7 @@ export const updateUser = async (
 
     // Get user_id from path or query
     const user_id =
-      event.pathParameters?.user_id ||
-      event.queryStringParameters?.user_id;
+      event.pathParameters?.user_id || event.queryStringParameters?.user_id;
 
     if (!user_id) {
       return {
@@ -49,7 +51,10 @@ export const updateUser = async (
       return {
         statusCode: err.statusCode || 403,
         headers,
-        body: JSON.stringify({ status: err.statusCode || 403, message: err.message }),
+        body: JSON.stringify({
+          status: err.statusCode || 403,
+          message: err.message,
+        }),
       };
     }
 
@@ -70,6 +75,7 @@ export const updateUser = async (
     }
 
     const service = new DynamoDBService(docClient, tableName, tableName);
+    const existingUser = await service.getUserById(user_id);
     const updated = await service.updateUser(user_id, validated);
 
     if (!updated) {
@@ -81,6 +87,17 @@ export const updateUser = async (
           message: "User not found.",
         }),
       };
+    }
+
+    if (existingUser?.name !== updated.name) {
+      const shipments = await service.getShipmentsByCustomerId(user_id);
+      await Promise.all(
+        shipments.map((shipment) =>
+          service.updateShipment(shipment.shipment_id, {
+            customer_name: updated.name,
+          }),
+        ),
+      );
     }
 
     return {

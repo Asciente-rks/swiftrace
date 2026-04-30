@@ -75,7 +75,10 @@
   background: var(--surface-92);
   padding: 12px 14px;
   color: var(--ink);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .login-container input:focus,
@@ -153,4 +156,126 @@
     width: 200px;
     height: auto;
   }
+}
+
+/* Test Credentials Button */
+.test-creds-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.3);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.test-creds-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 32px rgba(15, 118, 110, 0.4);
+}
+
+.test-creds-btn:active {
+  transform: scale(0.95);
+}
+
+.test-creds-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 998;
+}
+
+.test-creds-popover {
+  position: fixed;
+  bottom: 88px;
+  left: 24px;
+  background: var(--surface-88);
+  border: 1px solid var(--surface-85);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(14px);
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.test-creds-popover h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.test-creds-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.test-creds-close:hover {
+  background: var(--surface-85);
+}
+
+.test-creds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.test-cred-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--surface-85);
+  border-radius: 8px;
+  background: var(--surface-92);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.test-cred-option:hover {
+  background: var(--surface-85);
+  border-color: var(--accent);
+}
+
+.test-cred-option .role-label {
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 60px;
+  text-align: left;
+}
+
+.test-cred-option code {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--muted);
 }

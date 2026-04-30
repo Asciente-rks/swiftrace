@@ -1,22 +1,32 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { FormEvent } from "react";
 import "./AdminSection.css";
 
 type AdminSectionProps = {
-  apiBase: string;
-  authToken: string;
-  runRequest: (path: string, options: RequestInit, label: string) => Promise<unknown>;
+  runRequest: (
+    path: string,
+    options: RequestInit,
+    label: string,
+  ) => Promise<unknown>;
 };
 
-const AdminSection = ({ apiBase, authToken, runRequest }: AdminSectionProps) => {
+const AdminSection = ({ runRequest }: AdminSectionProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("customer");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const resetTimer = useRef<number | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await runRequest(
+    setSaveState("saving");
+    setSaveMessage(null);
+
+    const result = await runRequest(
       "/users",
       {
         method: "POST",
@@ -29,8 +39,34 @@ const AdminSection = ({ apiBase, authToken, runRequest }: AdminSectionProps) => 
           verification_status: "verified",
         }),
       },
-      "Create user"
+      "Create user",
     );
+
+    const wasError =
+      result &&
+      typeof result === "object" &&
+      "status" in result &&
+      typeof (result as { status?: unknown }).status === "number" &&
+      (result as { status: number }).status >= 400;
+
+    if (!wasError) {
+      setSaveState("saved");
+      setSaveMessage("User created successfully.");
+      setName("");
+      setEmail("");
+      setPassword("");
+      setRole("customer");
+
+      if (resetTimer.current) {
+        window.clearTimeout(resetTimer.current);
+      }
+      resetTimer.current = window.setTimeout(() => {
+        setSaveState("idle");
+        setSaveMessage(null);
+      }, 2000);
+    } else {
+      setSaveState("idle");
+    }
   };
 
   return (
@@ -76,7 +112,22 @@ const AdminSection = ({ apiBase, authToken, runRequest }: AdminSectionProps) => 
             <option value="admin">Admin</option>
           </select>
         </label>
-        <button type="submit">Create User</button>
+        <button
+          type="submit"
+          className={`btn-create ${saveState === "saved" ? "is-success" : ""}`}
+          disabled={saveState === "saving"}
+        >
+          {saveState === "saving"
+            ? "Creating..."
+            : saveState === "saved"
+              ? "Created"
+              : "Create User"}
+        </button>
+        {saveMessage && (
+          <div className="admin-save-feedback" aria-live="polite">
+            {saveMessage}
+          </div>
+        )}
       </form>
     </section>
   );
