@@ -13,7 +13,6 @@ export const updateUser = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication
     let jwtUser;
     try {
       jwtUser = requireAuth(event);
@@ -30,7 +29,6 @@ export const updateUser = async (
 
     const tableName = getTableName();
 
-    // Get user_id from path or query
     const user_id =
       event.pathParameters?.user_id || event.queryStringParameters?.user_id;
 
@@ -44,7 +42,6 @@ export const updateUser = async (
         }),
       };
     }
-    // Only allow user to update their own account or admin
     try {
       requireSelfOrRole(jwtUser, user_id, "admin");
     } catch (err: any) {
@@ -58,7 +55,6 @@ export const updateUser = async (
       };
     }
 
-    // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
     const validated = (await updateUserSchema.validate(body, {
       stripUnknown: true,

@@ -38,6 +38,8 @@ type ShipmentDraft = {
 type HistoryItem = {
   historyType?: string;
   status?: string;
+  historyAt?: string;
+  verifiedAt?: string;
   timestamp?: string | number;
   location?: string;
   current_location?: string;
@@ -220,9 +222,14 @@ const Dashboard = ({ apiBase, authToken, setAuthToken }: DashboardProps) => {
                                       </strong>{" "}
                                       - {item.status || "N/A"} at{" "}
                                       {item.current_location || "N/A"} (
-                                      {item.timestamp
+                                      {item.historyAt ||
+                                      item.verifiedAt ||
+                                      item.timestamp
                                         ? new Date(
-                                            item.timestamp,
+                                            item.historyAt ||
+                                              item.verifiedAt ||
+                                              item.timestamp ||
+                                              0,
                                           ).toLocaleString()
                                         : "N/A"}
                                       )

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { FormEvent } from "react";
 import "./SampleOrderSection.css";
 
@@ -13,10 +13,18 @@ type SampleOrderSectionProps = {
 const SampleOrderSection = ({ runRequest }: SampleOrderSectionProps) => {
   const [destination, setDestination] = useState("");
   const [origin, setOrigin] = useState("");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const resetTimer = useRef<number | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await runRequest(
+    setSaveState("saving");
+    setSaveMessage(null);
+
+    const result = await runRequest(
       "/orders/sample",
       {
         method: "POST",
@@ -25,6 +33,31 @@ const SampleOrderSection = ({ runRequest }: SampleOrderSectionProps) => {
       },
       "Sample order",
     );
+
+    const wasError =
+      result &&
+      typeof result === "object" &&
+      "status" in result &&
+      typeof (result as { status?: unknown }).status === "number" &&
+      (result as { status: number }).status >= 400;
+
+    if (!wasError) {
+      setSaveState("saved");
+      setSaveMessage("Sample order created successfully.");
+      setDestination("");
+      setOrigin("");
+
+      if (resetTimer.current) {
+        window.clearTimeout(resetTimer.current);
+      }
+
+      resetTimer.current = window.setTimeout(() => {
+        setSaveState("idle");
+        setSaveMessage(null);
+      }, 2000);
+    } else {
+      setSaveState("idle");
+    }
   };
 
   return (
@@ -51,7 +84,22 @@ const SampleOrderSection = ({ runRequest }: SampleOrderSectionProps) => {
             placeholder="Warehouse"
           />
         </label>
-        <button type="submit">Create Sample Order</button>
+        <button
+          type="submit"
+          className={`sample-order-button ${saveState === "saved" ? "is-success" : ""}`}
+          disabled={saveState === "saving"}
+        >
+          {saveState === "saving"
+            ? "Creating..."
+            : saveState === "saved"
+              ? "Created"
+              : "Create Sample Order"}
+        </button>
+        {saveMessage && (
+          <div className="sample-order-feedback" aria-live="polite">
+            {saveMessage}
+          </div>
+        )}
       </form>
     </section>
   );

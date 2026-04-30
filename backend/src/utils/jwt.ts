@@ -1,15 +1,14 @@
 import jwt, { SignOptions, Secret } from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN =
-  (process.env.JWT_EXPIRES_IN ?? "7d") as SignOptions["expiresIn"];
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ??
+  "7d") as SignOptions["expiresIn"];
 
 export interface JwtPayload {
   user_id: string;
   role: "admin" | "shipper" | "customer";
   email?: string;
   name?: string;
-  // add more fields as needed
 }
 
 function getJwtSecret(): Secret {

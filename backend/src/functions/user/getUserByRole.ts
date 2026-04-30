@@ -8,10 +8,9 @@ import { toPublicUser } from "../../utils/user";
 import type { UserRole } from "../../types/user";
 
 export const getUsersByRole = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication and admin check
     let jwtUser;
     try {
       jwtUser = requireAuth(event);
@@ -20,7 +19,10 @@ export const getUsersByRole = async (
       return {
         statusCode: err.statusCode || 401,
         headers,
-        body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
+        body: JSON.stringify({
+          status: err.statusCode || 401,
+          message: err.message,
+        }),
       };
     }
     const tableName = getTableName();

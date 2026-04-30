@@ -10,10 +10,9 @@ import { toPublicUser } from "../../utils/user";
 import type { CreateUserInput } from "../../types/user";
 
 export const registerUser = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication and admin check
     let jwtUser;
     try {
       jwtUser = requireAuth(event);
@@ -22,12 +21,14 @@ export const registerUser = async (
       return {
         statusCode: err.statusCode || 401,
         headers,
-        body: JSON.stringify({ status: err.statusCode || 401, message: err.message }),
+        body: JSON.stringify({
+          status: err.statusCode || 401,
+          message: err.message,
+        }),
       };
     }
     const tableName = getTableName();
 
-    // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
     const validated = (await createUserSchema.validate(body, {
       stripUnknown: true,
