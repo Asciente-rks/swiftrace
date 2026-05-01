@@ -36,7 +36,7 @@
 .admin-section input,
 .admin-section select {
   font: inherit;
-  border: 1px solid rgba(230, 213, 194, 0.9);
+  border: 1px solid var(--surface-85);
   border-radius: 14px;
   background: var(--surface-92);
   padding: 12px 14px;
@@ -81,8 +81,8 @@
   padding: 12px 14px;
   border-radius: 8px;
   background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid #10b981;
+  color: #86efac;
+  border: 1px solid rgba(16, 185, 129, 0.35);
   font-size: 13px;
   font-weight: 500;
   text-align: center;

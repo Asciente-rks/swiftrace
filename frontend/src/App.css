@@ -900,13 +900,9 @@ body {
 .shipments-shell {
   padding: 16px;
   border-radius: 30px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 252, 248, 0.9),
-    rgba(249, 243, 236, 0.84)
-  );
-  border: 1px solid rgba(220, 205, 188, 0.9);
-  box-shadow: 0 24px 60px rgba(70, 55, 38, 0.08);
+  background: linear-gradient(180deg, var(--surface-88), var(--surface-84));
+  border: 1px solid var(--surface-85);
+  box-shadow: var(--shadow-soft);
   overflow: visible;
 }
 
@@ -970,7 +966,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(22, 18, 12, 0.42);
+  background: rgba(18, 18, 18, 0.55);
   backdrop-filter: blur(8px);
   display: grid;
   place-items: center;
@@ -980,13 +976,9 @@ body {
 .details-modal {
   width: min(920px, 100%);
   border-radius: 30px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 252, 248, 0.98),
-    rgba(249, 243, 236, 0.94)
-  );
-  border: 1px solid rgba(220, 205, 188, 0.95);
-  box-shadow: 0 30px 90px rgba(70, 55, 38, 0.22);
+  background: linear-gradient(180deg, var(--surface-95), var(--surface-92));
+  border: 1px solid var(--surface-85);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -1007,7 +999,7 @@ body {
 }
 
 .details-close-btn {
-  border: 1px solid rgba(230, 213, 194, 0.95);
+  border: 1px solid var(--surface-85);
   background: var(--surface-78);
   color: var(--ink);
   border-radius: 999px;
@@ -1026,8 +1018,8 @@ body {
 .details-grid div {
   padding: 14px 16px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(220, 205, 188, 0.75);
+  background: var(--surface-78);
+  border: 1px solid var(--surface-85);
 }
 
 .details-grid span {
@@ -1071,7 +1063,7 @@ body {
   padding: 16px 18px;
   color: var(--muted);
   background: var(--surface-72);
-  border: 1px dashed rgba(230, 213, 194, 0.95);
+  border: 1px dashed var(--surface-85);
 }
 
 .users-view,
