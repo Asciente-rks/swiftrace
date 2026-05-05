@@ -1,91 +1,214 @@
 # SwiftRace
 
-> A serverless logistics tracking platform — customers, shippers, and admins coordinate shipments through a tracking number and a clean event timeline.
+> A serverless logistics tracking platform — customers place sample orders, shippers progress them through a four-stage delivery lifecycle, admins verify status changes, and recipients track packages by tracking number.
 
-SwiftRace is a small but production-shaped logistics system: customers place sample orders, shippers progress them through a four-stage delivery lifecycle, admins verify status changes, and recipients track packages by tracking number. Every state change writes an immutable history event so you always have a paper trail of what happened to a shipment and when.
+SwiftRace is a portfolio-shaped logistics system that captures the moving parts of a real shipping platform without the operational weight: 15 independent AWS Lambdas behind API Gateway, DynamoDB single-table design, a React 19 + Vite frontend, and an immutable history timeline so every shipment has a paper trail.
 
-🌐 **Live demo:** [swiftrace.vercel.app](https://swiftrace.vercel.app)
+---
+
+## Live Demo
+
+- **🌐 Live app:** [swiftrace.vercel.app](https://swiftrace.vercel.app)
+- **🔧 Backend:** AWS API Gateway (`ap-southeast-1`)
 
 ---
 
 ## Table of Contents
 
 1. [What It Does](#what-it-does)
-2. [System Architecture](#system-architecture)
+2. [Architecture](#architecture)
 3. [Tech Stack](#tech-stack)
-4. [Repository Layout](#repository-layout)
-5. [Database Design](#database-design)
+4. [Database Design](#database-design)
+5. [Repository Layout](#repository-layout)
 6. [API Reference](#api-reference)
-7. [Shipment Lifecycle](#shipment-lifecycle)
-8. [Roles & Verification](#roles--verification)
-9. [Deployment](#deployment)
+7. [Authentication & Credentials](#authentication--credentials)
+8. [Deployment](#deployment)
+9. [Cost Breakdown](#cost-breakdown)
 10. [Local Development](#local-development)
-11. [Environment Variables](#environment-variables)
+11. [Author](#author)
 
 ---
 
 ## What It Does
 
-- **Place sample orders** — a `placeSampleOrder` flow stands up a complete demo shipment in one call (useful for testing and onboarding).
+- **Place sample orders** — `placeSampleOrder` stands up a complete demo shipment in one call (useful for testing and onboarding).
 - **Create real shipments** with origin, destination, customer, and a generated tracking number.
 - **Update shipment status** through four lifecycle stages: `preparing → in_transit → out_for_delivery → delivered`.
-- **Track by tracking number** — public-facing endpoint for recipients; returns the shipment plus a sanitized history timeline.
+- **Track by tracking number** — public-facing endpoint returns shipment metadata + sanitized history timeline.
 - **Email tracking links** to recipients on demand.
 - **Verify history events** as an admin — internal `admin_verified` flag is hidden from public history responses.
 - **Filter shipments** by status (admin/shipper view) or by customer (customer view).
-- **Three user roles** with verification gating — new shippers and admins need approval before they can act.
+- **Three-role model** with verification gating — shippers and admins need approval before they can act.
 
 ---
 
-## System Architecture
+## Architecture
 
-```mermaid
-flowchart LR
-    subgraph Client["Browser (React + Vite)"]
-        UI["Vercel SPA<br/>react-router 7"]
-    end
-
-    subgraph AWS["AWS (region: ap-southeast-1)"]
-        APIG["API Gateway<br/>(REST, per-route)"]
-        Lambdas["Lambda functions<br/>(15 handlers)"]
-        DDB[("DynamoDB single table<br/>swiftrace-logistics-{stage}<br/>+ 4 GSIs")]
-    end
-
-    SMTP["SMTP / Nodemailer<br/>(tracking emails)"]
-
-    UI -- "REST + JWT" --> APIG
-    APIG --> Lambdas
-    Lambdas --> DDB
-    Lambdas --> SMTP
+```
+┌────────────────────────────┐
+│ Browser (React 19 + Vite)  │
+│  • Vercel-hosted SPA       │
+│  • react-router 7          │
+└───────────┬────────────────┘
+            │ REST + JWT (Bearer)
+            │
+            ▼
+┌────────────────────────────┐
+│  AWS API Gateway (REST)    │
+│  ap-southeast-1            │
+└───┬────────────────────────┘
+    │ per-route HTTP integration
+    │
+    ▼
+┌────────────────────────────────────────┐
+│ 15 Lambda functions                    │
+│  Users:                                │
+│   • createUser, loginUser, updateUser, │
+│     deleteUser, getUserByRole          │
+│  Shipments:                            │
+│   • createShipment, updateShipment,    │
+│     getShipmentByTracking,             │
+│     getShipmentByStatus,               │
+│     getShipmentHistory,                │
+│     placeSampleOrder,                  │
+│     sendTrackingEmail                  │
+│  Dev:                                  │
+│   • seedDatabase, clearDatabase        │
+└───────────────┬────────────────────────┘
+                │
+                ▼
+        ┌───────────────────┐
+        │ DynamoDB single   │
+        │ table             │
+        │  + 4 GSIs         │
+        │ (role / status /  │
+        │  shipmentId /     │
+        │  trackingNumber)  │
+        └───────────────────┘
+                │
+                ▼
+        ┌───────────────────┐
+        │ Nodemailer / SMTP │  (tracking email links)
+        └───────────────────┘
 ```
 
-**Why Serverless Framework?** SwiftRace's backend is shaped as **fifteen independent HTTP-triggered Lambdas** rather than one router-Lambda — each function does one thing (`createShipment`, `getShipmentByTracking`, etc.) and `serverless.yml` declares the route + IAM + timeout for each. Deployment is a single `serverless deploy` and rollbacks are per-function.
+**Notable architectural choices:**
 
-**Single-table DynamoDB** keeps shipment metadata, history events, and users in one table with PK/SK prefixes. Four GSIs cover the read patterns: by role, by status, by shipment ID, and by tracking number.
+- **15 independent Lambdas** rather than one router-Lambda — each function does one thing (`createShipment`, `getShipmentByTracking`, etc.). `serverless.yml` declares the route, IAM, and timeout per function. Rollbacks are per-function.
+- **Single-table DynamoDB** with PK/SK prefixes. Four GSIs cover the read patterns the API needs.
+- **Tracking number as the partition key** because every customer-facing read is "look up shipment X by tracking" — public reads need zero GSI hops.
+- **History events sit under the same partition** as the parent shipment — a single `Query` returns the full timeline.
+- **`status_` stored prefixed** (`STATUS#in_transit`) inside the GSI to avoid hot-partitioning. The service layer transparently strips the prefix on read.
 
 ---
 
 ## Tech Stack
 
-| Layer | Backend | Frontend |
-|---|---|---|
-| Language | TypeScript 5, Node.js 20 | TypeScript 5, React 19 |
-| Runtime | AWS Lambda | Browser (Vercel) |
-| Framework | Serverless Framework v3 | Vite 8 |
-| HTTP | API Gateway REST | `fetch` |
-| Data | DynamoDB via `aws-sdk` v2 (`DocumentClient`) | — |
-| Auth | JWT (`jsonwebtoken`) + bcrypt-style hashing in `utils/password.ts` | localStorage `authToken` |
-| Validation | yup | — |
-| Email | nodemailer | — |
-| Routing | `serverless.yml` per-function HTTP events | react-router-dom 7 |
-| Styling | — | Plain CSS modules (no Tailwind) |
-| Deploy plugin | `serverless-dotenv-plugin` | Vercel |
+### Backend
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Runtime | Node.js 20 + TypeScript 5 | Latest LTS on Lambda |
+| Framework | **Serverless Framework v3** | Per-function HTTP events, idempotent deploys |
+| HTTP | API Gateway REST | Built-in CORS, throttling, IAM |
+| Database | **DynamoDB single-table** | 25 GB free perpetually, single-digit ms latency |
+| Driver | `aws-sdk` v2 `DocumentClient` | Mature, batteries-included |
+| Auth | JWT (`jsonwebtoken`) + custom hash | Stateless, simple |
+| Validation | Yup | Tiny, ergonomic |
+| Email | nodemailer + SMTP | Free with Gmail / any provider |
+| Deploy plugin | `serverless-dotenv-plugin` | Inject `.env` into Lambda env |
+
+### Frontend
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Framework | React 19 + TypeScript 5 | Latest, concurrent features |
+| Build | Vite 8 | Fast dev loop |
+| Routing | react-router-dom 7 | Latest API |
+| HTTP | `fetch` + `localStorage` for token | No axios needed |
+| Styling | Plain CSS modules | No Tailwind — sometimes simpler is better |
+| Hosting | **Vercel** | Hobby tier free, global CDN |
+
+---
+
+## Database Design
+
+SwiftRace uses **DynamoDB single-table design**. One table stores users, shipments, and shipment history events; four global secondary indexes cover the read patterns.
+
+### Table: `swiftrace-logistics-{stage}`
+
+| Item type | PK | SK | What it holds |
+|-----------|----|----|---------------|
+| **USER** | `USER#<user_id>` | `METADATA` | account + role + verification |
+| **SHIPMENT** | `SHIPMENT#<tracking_number>` | `METADATA` | shipment metadata + status |
+| **HISTORY** | `SHIPMENT#<tracking_number>` | `EVENT#<historyId>` | one row per state transition |
+
+### Global Secondary Indexes
+
+| Index | Hash key | Range key | Purpose |
+|-------|----------|-----------|---------|
+| `role-createdAt-index` | `role` | `createdAt` | List users by role, newest-first |
+| `status-updatedAt-index` | `status_` (prefixed) | `updatedAt` | List shipments by status |
+| `shipmentId-index` | `shipment_id` | — | Update by shipment_id (SK lookup needs tracking#) |
+| `trackingNumber-index` | `tracking_number` | — | Lookups by tracking outside SHIPMENT# scope |
+
+### USER record
+
+| Attribute | Type | Notes |
+|-----------|------|-------|
+| `user_id` | String | UUID |
+| `name` | String | display name |
+| `email` | String | login key (scan-by-email) |
+| `phone` | String | optional |
+| `role` | String | `'customer' \| 'shipper' \| 'admin'` |
+| `verification_status` | String | `'pending' \| 'verified' \| 'rejected'` |
+| `verifiedAt` | String | ISO, set when admin verifies |
+| `verifiedBy` | String | user_id of admin who verified |
+| `password_hash` | String | scrypt; **never returned via API** |
+| `createdAt` / `updatedAt` | String | ISO |
+| `rolePk` / `roleSk` | String | GSI projection keys |
+
+### SHIPMENT record
+
+| Attribute | Type | Notes |
+|-----------|------|-------|
+| `shipment_id` | String | UUID |
+| `customer_id` | String | links to a USER |
+| `customer_name` | String | denormalized for display |
+| `product_name` | String | currently always `"sample"` (demo dataset) |
+| `tracking_number` | String | unique, primary lookup key |
+| `origin` | String | source location |
+| `destination` | String | target location |
+| `current_location` | String | optional, updated mid-transit |
+| `status_` | String | `STATUS#<status>` in storage; plain `status` in API responses |
+| `createdAt` / `updatedAt` | String | ISO |
+
+### HISTORY record
+
+Sortable by `historyId` within a shipment's partition.
+
+| Attribute | Type | Notes |
+|-----------|------|-------|
+| `tracking_number` | String | parent shipment |
+| `historyId` | String | UUID |
+| `historyType` | String | `'created' \| 'picked_up' \| 'in_transit' \| 'out_for_delivery' \| 'delivered'` |
+| `historyAt` | String | ISO |
+| `status` | String | optional, snapshot of shipment status |
+| `current_location` | String | optional |
+| `details` | String | free-form note |
+| `admin_verified` | Boolean | **internal — stripped from public history responses** |
+| `verifiedAt` / `verifiedBy` | String | also stripped |
+
+**Notable design choices:**
+
+- **Public history responses use a stripped variant** (`ShipmentHistoryResponse`) that hides `admin_verified` / `verifiedAt` / `verifiedBy` so customers never see internal moderation metadata.
+- **`PAY_PER_REQUEST` billing** keeps cost proportional to traffic — fine for portfolio traffic and predictable for production at low volume.
 
 ---
 
 ## Repository Layout
 
-This is a **monorepo**: backend Lambdas and the frontend SPA live in the same repository.
+This is a **monorepo**: backend Lambdas and frontend SPA in one repository.
 
 ```
 swiftrace/
@@ -110,11 +233,8 @@ swiftrace/
 │       │   └── dev/                 # seedDatabase, clearDatabase (HTTP)
 │       ├── service/
 │       │   └── dynamodb.ts          # Single DynamoDBService class —
-│       │                             #   users + shipments + history
-│       ├── types/
-│       │   ├── user.ts              # USER_ROLES, verification statuses
-│       │   ├── shipment.ts          # SHIPMENT_STATUS lifecycle
-│       │   └── history.ts           # SHIPMENT_HISTORY_TYPES events
+│       │                            # users + shipments + history
+│       ├── types/                   # user, shipment, history
 │       ├── utils/
 │       │   ├── auth.ts, jwt.ts, password.ts
 │       │   ├── email.ts
@@ -156,160 +276,50 @@ swiftrace/
 
 ---
 
-## Database Design
-
-SwiftRace uses **DynamoDB single-table design**. One table stores users, shipments, and shipment history events; four global secondary indexes cover the read patterns the API needs.
-
-```mermaid
-flowchart TB
-    subgraph TBL["swiftrace-logistics-{stage} (single table)"]
-        U["USER items<br/>PK=USER#&lt;user_id&gt;<br/>SK=METADATA<br/>+rolePk, roleSk"]
-        S["SHIPMENT items<br/>PK=SHIPMENT#&lt;tracking_number&gt;<br/>SK=METADATA<br/>+status_, shipment_id"]
-        H["HISTORY items<br/>PK=SHIPMENT#&lt;tracking_number&gt;<br/>SK=EVENT#&lt;historyId&gt;"]
-    end
-
-    GSI1["role-createdAt-index<br/>role (HASH) + createdAt (RANGE)<br/>→ list users by role newest-first"]
-    GSI2["status-updatedAt-index<br/>status_ (HASH) + updatedAt (RANGE)<br/>→ list shipments by status"]
-    GSI3["shipmentId-index<br/>shipment_id (HASH)<br/>→ update by id (SK lookup needs tracking#)"]
-    GSI4["trackingNumber-index<br/>tracking_number (HASH)<br/>→ lookups by tracking outside SHIPMENT# scope"]
-
-    TBL --> GSI1
-    TBL --> GSI2
-    TBL --> GSI3
-    TBL --> GSI4
-```
-
-**Notable design choices:**
-
-- **Tracking number is the partition key** for shipments because every customer-facing read is "look up shipment X by tracking". Public reads need zero GSI hops.
-- **History events sit under the same partition** as the parent shipment (`SK=EVENT#<historyId>`), so a single `Query` returns the full timeline ordered by event ID.
-- **`status_` is stored prefixed** (`STATUS#in_transit`) inside the GSI to avoid hot-partitioning on a single status value across the whole table. The service layer transparently strips the prefix on read.
-- **`PAY_PER_REQUEST` billing** keeps cost proportional to traffic — fine for a portfolio app and predictable for production loads in the low thousands of requests.
-
-### Domain types (TypeScript)
-
-```typescript
-// Roles + verification
-const USER_ROLES = ["customer", "shipper", "admin"] as const;
-const USER_VERIFICATION_STATUSES = ["pending", "verified", "rejected"] as const;
-
-interface User {
-  user_id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  role: UserRole;
-  verification_status: UserVerificationStatus;
-  verifiedAt?: string;
-  verifiedBy?: string;          // user_id of admin who verified
-  password_hash: string;        // never returned via API
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Shipment lifecycle
-const SHIPMENT_STATUS = [
-  "preparing", "in_transit", "out_for_delivery", "delivered"
-] as const;
-
-interface Shipment {
-  shipment_id: string;
-  customer_id: string;
-  customer_name: string;
-  product_name: "sample";       // demo dataset is sample-only
-  tracking_number: string;
-  origin: string;
-  destination: string;
-  current_location?: string;
-  status_: ShipmentStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// History timeline
-const SHIPMENT_HISTORY_TYPES = [
-  "created", "picked_up", "in_transit", "out_for_delivery", "delivered"
-] as const;
-
-interface ShipmentHistoryItem {
-  tracking_number: string;
-  historyId: string;
-  historyType: ShipmentHistoryType;
-  historyAt: string;
-  status?: ShipmentStatus;
-  current_location?: string;
-  details?: string;
-  admin_verified?: boolean;     // hidden from public responses
-  verifiedAt?: string;
-  verifiedBy?: string;
-}
-```
-
-The repo's `getShipmentHistoryForUser` returns `ShipmentHistoryResponse` (a stripped variant of `ShipmentHistoryItem`) that hides `admin_verified` / `verifiedAt` / `verifiedBy` so customers don't see internal moderation metadata.
-
----
-
 ## API Reference
 
-| Method | Path | Purpose |
-|---|---|---|
-| `POST` | `/users` | Register a user (default role `customer`) |
-| `POST` | `/auth/login` | Email + password → JWT |
-| `PUT` | `/users/{user_id}` | Update name / phone / role / verification |
-| `DELETE` | `/users/{user_id}` | Remove a user |
-| `GET` | `/users` | List users by role (`?role=customer\|shipper\|admin`) |
-| `POST` | `/orders/sample` | Place a sample order (demo helper) |
-| `POST` | `/shipments` | Create a real shipment |
-| `PUT` | `/shipments/{shipment_id}` | Update status / current_location |
-| `GET` | `/shipments/tracking/{tracking_number}` | Public lookup by tracking number |
-| `GET` | `/shipments/{tracking_number}/history` | Sanitized event timeline (public) |
-| `GET` | `/shipments/status/{status_}` | Internal: shipments at a given status |
-| `POST` | `/shipments/tracking/email` | Email a tracking link to a customer |
-| `POST` | `/dev/seed` | Bulk seed demo data (gated) |
-| `POST` | `/dev/clear` | Wipe table contents (gated) |
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `POST` | `/users` | none | Register a user (default role `customer`) |
+| `POST` | `/auth/login` | none | Email + password → JWT |
+| `PUT` | `/users/{user_id}` | JWT | Update name / phone / role / verification |
+| `DELETE` | `/users/{user_id}` | JWT | Remove a user |
+| `GET` | `/users` | JWT | List users by role (`?role=customer\|shipper\|admin`) |
+| `POST` | `/orders/sample` | JWT | Place a sample order (demo helper) |
+| `POST` | `/shipments` | JWT | Create a real shipment |
+| `PUT` | `/shipments/{shipment_id}` | JWT | Update status / current_location |
+| `GET` | `/shipments/tracking/{tracking_number}` | JWT | Public lookup by tracking number |
+| `GET` | `/shipments/{tracking_number}/history` | JWT | Sanitized event timeline (public) |
+| `GET` | `/shipments/status/{status_}` | JWT | Internal: shipments at a given status |
+| `POST` | `/shipments/tracking/email` | JWT | Email a tracking link to a customer |
+| `POST` | `/dev/seed` | JWT | Bulk seed demo data |
+| `POST` | `/dev/clear` | JWT | Wipe table contents |
 
-Every endpoint enables CORS at the API Gateway level, returns JSON, and authorized routes expect `Authorization: Bearer <jwt>` (`utils/jwt.ts`).
-
----
-
-## Shipment Lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> preparing: createShipment
-    preparing --> in_transit: shipper updates
-    in_transit --> out_for_delivery: shipper updates
-    out_for_delivery --> delivered: shipper updates
-    delivered --> [*]
-
-    note right of preparing
-        history event: created
-    end note
-    note right of in_transit
-        history event: picked_up
-        + in_transit
-    end note
-    note right of out_for_delivery
-        history event: out_for_delivery
-    end note
-    note right of delivered
-        history event: delivered
-    end note
-```
-
-Each transition writes a `ShipmentHistoryItem` row with the new status, `current_location`, and free-form `details`. The history is immutable — you never mutate a past event, you append a new one.
+Every endpoint enables CORS at the API Gateway level. Authorized routes expect `Authorization: Bearer <jwt>`.
 
 ---
 
-## Roles & Verification
+## Authentication & Credentials
 
-| Role | Default verification | What they can do |
+### Seeded accounts
+
+`npm run seed` (run from `backend/`) creates these three pre-verified accounts:
+
+| Email | Role | Password |
 |---|---|---|
-| **customer** | `verified` (auto) | Place sample orders, look up their own shipments by tracking, request email tracking links |
-| **shipper** | `pending` (manual approval) | Update shipment status (preparing → delivered), see assigned shipments, view by status |
-| **admin** | `pending` (manual approval) | Verify other shippers/admins, manage users, see all shipments by status, run dev seed/clear |
+| `admin@swiftrace.com` | admin | `admin123` |
+| `shipper@swiftrace.com` | shipper | `shipper123` |
+| `customer@swiftrace.com` | customer | `customer123` |
 
-`verification_status` defaults to `pending` for shippers/admins on registration. Until an admin flips it to `verified`, they can authenticate but most write actions are blocked.
+Customers register publicly with `verification_status: 'verified'` (auto). Shippers and admins register as `'pending'` — an existing admin must promote them to `'verified'` before they can do most write actions.
+
+### Self-registration
+
+1. Visit the live demo, click **Register**.
+2. Enter email + password — defaults to `customer` role with `verified` status.
+3. Sign in.
+
+To register as a shipper or admin, edit your role through an admin's user-management view (after they verify you).
 
 ---
 
@@ -351,6 +361,33 @@ npm run build
 
 ---
 
+## Cost Breakdown
+
+> **Designed for $0/month forever.** Every layer of SwiftRace runs on a free tier with no expiry.
+
+| Service | Free tier | We use | Headroom |
+|---------|-----------|--------|----------|
+| **AWS Lambda** | 1M invocations/mo + 400K GB-s | ~5K invocations/mo | **99.5%** |
+| **API Gateway REST** | 1M requests/mo (12 months) | ~5K requests/mo | **99.5%** |
+| **DynamoDB (PAY_PER_REQUEST)** | 25 GB storage + 25 R/W units (perpetual) | <100 MB | **99%+** |
+| **CloudWatch Logs** | 5 GB ingestion/mo | <50 MB | **99%** |
+| **Vercel Hobby** | 100 GB bandwidth, unlimited deploys | <500 MB/mo | **99.5%** |
+| **GitHub Actions** (public repo) | unlimited minutes | n/a (manual deploy) | unlimited |
+| **SMTP (Gmail / similar)** | 500/day | <10/day | **98%** |
+
+**Total: $0/month**, with massive headroom on every line.
+
+> Note: API Gateway's 1M req/mo free tier is for the first 12 months; after that it's **$3.50 per million** — still effectively free at portfolio scale.
+
+**Why each free tier was chosen:**
+
+- **DynamoDB over RDS** — 25 GB free perpetually, single-digit ms latency, no cold start.
+- **Per-function Lambdas over a router-Lambda** — granular cold starts, isolated failures, IAM scoped per route.
+- **Vercel over self-hosting** — global CDN + free SSL + automatic deploys on push.
+- **Serverless Framework over CDK / SAM** — simpler YAML, mature ecosystem, faster onboarding.
+
+---
+
 ## Local Development
 
 ### Backend
@@ -368,7 +405,7 @@ npm run seed
 npm run clear
 ```
 
-Local Lambda execution can be done via `serverless invoke local --function createShipment --path event.json` or Serverless Offline. There's no traditional `npm run dev` server because the backend is purely event-driven Lambdas.
+Local Lambda execution can be done via `serverless invoke local --function createShipment --path event.json` or Serverless Offline.
 
 ### Frontend
 
@@ -383,30 +420,24 @@ npm run preview      # Serve dist/ locally
 
 Set `VITE_API_BASE` in `frontend/.env` to your API Gateway URL.
 
----
+### Environment Variables
 
-## Environment Variables
-
-### Backend (`.env` consumed by `serverless-dotenv-plugin`)
+**Backend** (`.env` consumed by `serverless-dotenv-plugin`):
 
 ```env
-# DynamoDB
 LOGISTICS_DYNAMO_TABLE=swiftrace-logistics-dev
 SHIPMENT_DYNAMO_TABLE=swiftrace-logistics-dev   # defaults to LOGISTICS_DYNAMO_TABLE
 
-# Auth
 JWT_SECRET=...
 JWT_EXPIRES_IN=7d
 
-# Email (tracking links)
 EMAIL_USER=...
 EMAIL_PASS=...
 
-# Domain default
 DEFAULT_ORIGIN=Warehouse
 ```
 
-### Frontend (`frontend/.env`)
+**Frontend** (`frontend/.env`):
 
 ```env
 VITE_API_BASE=https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/dev
@@ -416,4 +447,4 @@ VITE_API_BASE=https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/dev
 
 ## Author
 
-Built by [Asciente-rks](https://github.com/Asciente-rks). Live demo at **[swiftrace.vercel.app](https://swiftrace.vercel.app)**.
+Built by **Ralph Kenneth F. Sonio** ([@Asciente-rks](https://github.com/Asciente-rks)). Live at **[swiftrace.vercel.app](https://swiftrace.vercel.app)**.
