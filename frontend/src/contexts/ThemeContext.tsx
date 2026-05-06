@@ -17,13 +17,9 @@ export { ThemeContext };
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [theme, setTheme] = useState<Theme>(() => {
-
-    const savedTheme = localStorage.getItem("theme") as Theme;
-    if (savedTheme) return savedTheme;
-
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
+    const savedTheme = localStorage.getItem("theme") as Theme | null;
+    if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
+    return "light";
   });
 
   useEffect(() => {
