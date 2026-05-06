@@ -5,14 +5,8 @@ export default defineConfig(({ mode }) => {
   const isProd = mode === "production";
   return {
     plugins: [react()],
-    esbuild: {
-      drop: isProd ? ["console", "debugger"] : [],
-      legalComments: "none",
-    },
     build: {
       sourcemap: false,
-      minify: "esbuild",
-      cssMinify: true,
       rollupOptions: {
         output: isProd
           ? {
