@@ -12,7 +12,7 @@ export const createShipment = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication
+
     let jwtUser;
     try {
       jwtUser = requireAuth(event);
@@ -26,13 +26,11 @@ export const createShipment = async (
     }
     const tableName = getTableName();
 
-    // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
     const validated = (await createShipmentSchema.validate(body, {
       stripUnknown: true,
     })) as CreateShipmentInput;
 
-    // Create shipment
     const service = new DynamoDBService(docClient, tableName, tableName);
     const shipment = await service.createShipment(validated);
     await service.createShipmentHistory({

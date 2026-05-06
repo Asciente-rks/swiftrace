@@ -1,4 +1,4 @@
-// Helper to derive chart colors from CSS variables (dark-mode aware)
+
 export function getChartTheme() {
   if (typeof window === 'undefined' || !window.getComputedStyle) {
     return {
@@ -28,7 +28,6 @@ export function getChartTheme() {
   };
 }
 
-// Example small helper to build Chart.js options (if using Chart.js v3+)
 export function buildChartOptions() {
   const t = getChartTheme();
   return {

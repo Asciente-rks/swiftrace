@@ -11,7 +11,7 @@ export const sendTrackingEmailHandler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication
+
     try {
       requireAuth(event);
     } catch (err: any) {
@@ -23,7 +23,6 @@ export const sendTrackingEmailHandler = async (
     }
     const tableName = getTableName();
 
-    // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
     const email = body?.email as string;
     const tracking_number = body?.tracking_number as string;
@@ -39,7 +38,6 @@ export const sendTrackingEmailHandler = async (
       };
     }
 
-    // Optionally, verify the shipment exists
     const service = new DynamoDBService(docClient, tableName, tableName);
     const shipment = await service.getShipmentByTrackingNumber(tracking_number);
 
@@ -54,7 +52,6 @@ export const sendTrackingEmailHandler = async (
       };
     }
 
-    // Send the email
     await sendTrackingEmail(email, tracking_number);
 
     return {

@@ -321,6 +321,25 @@ Customers register publicly with `verification_status: 'verified'` (auto). Shipp
 
 To register as a shipper or admin, edit your role through an admin's user-management view (after they verify you).
 
+### Dev Tools quick-login
+
+The login page ships with a floating **⚙ Dev Tools** button in the bottom-right corner. Click it to one-shot sign in as Admin / Shipper / Customer using the seeded credentials — handy for portfolio reviewers who don't want to type anything. The button still goes through the rate-limited `/auth/login` endpoint; it just skips the typing.
+
+---
+
+## Hardening
+
+Because the live demo is reachable by anyone on the public internet, the API and frontend ship a few defenses:
+
+- **Per-IP login rate limiting** — `backend/src/utils/rate-limit.ts` keeps an in-memory bucket per client IP. `/auth/login` is capped at 5 attempts per 60-second window. Hitting the limit returns `429` with `Retry-After`, `X-RateLimit-Limit`, and `X-RateLimit-Remaining` headers so the frontend can show a friendly "slow down" message. State is per Lambda warm container; for a multi-container production deploy, swap the in-memory `Map` for DynamoDB or Redis.
+- **Hardened security headers on every response** (set in `backend/src/utils/error-handler.ts`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Strict-Transport-Security`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`, `Cross-Origin-Resource-Policy: cross-origin`, plus a generic `Server: Swiftrace` header to mask the runtime fingerprint.
+- **Generic 500s** — the global error handler no longer leaks `error.message` or stack traces; clients always see `{ status: 500, message: "Internal server error" }`.
+- **Frontend bundle hardening** — `frontend/src/utils/security.ts` runs at boot in production builds:
+  - Replaces every `console.*` method with a no-op and clears the console every 1.5s, so opening DevTools shows nothing useful.
+  - Disables the React DevTools global hook so the React component tree isn't browsable.
+  - **Does NOT block F12, right-click, or `Ctrl+Shift+I`** — the dev tools panel itself stays open-able. The defenses are about making what's inside opaque, not about pretending the user can't open it.
+- **Vite production build** — `vite.config.js` drops every `console.*` call and `debugger` statement from the bundle, disables source maps, and rewrites entry / chunk / asset filenames as content hashes. Combined with esbuild's name mangling, the deployed JS reads as a wall of single-letter identifiers in DevTools.
+
 ---
 
 ## Deployment

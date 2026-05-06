@@ -9,7 +9,7 @@ export const deleteUser = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication and admin check
+
     let jwtUser;
     try {
       jwtUser = requireAuth(event);
@@ -23,7 +23,6 @@ export const deleteUser = async (
     }
     const tableName = getTableName();
 
-    // Get user_id from path or query
     const user_id =
       event.pathParameters?.user_id ||
       event.queryStringParameters?.user_id;

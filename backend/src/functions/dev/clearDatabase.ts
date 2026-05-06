@@ -16,7 +16,6 @@ export const handler = async () => {
     const itemsToDelete: { PK: string; SK: string }[] = [];
     let lastEvaluatedKey;
 
-    // Scan all items
     do {
       const result = await docClient
         .scan({
@@ -34,7 +33,7 @@ export const handler = async () => {
             itemsToDelete.push({ PK: pk, SK: sk });
           }
         } else {
-          // Delete shipments and history
+
           itemsToDelete.push({ PK: pk, SK: sk });
         }
       }
@@ -42,7 +41,6 @@ export const handler = async () => {
       lastEvaluatedKey = result.LastEvaluatedKey;
     } while (lastEvaluatedKey);
 
-    // Delete the items
     for (const key of itemsToDelete) {
       await docClient
         .delete({

@@ -87,7 +87,7 @@ const ConsoleSection = ({
     options: RequestInit,
     label: string
   ): Promise<unknown> => {
-    // Placeholder, since it's admin console, assume auth is set
+
     return null;
   };
 

@@ -10,7 +10,7 @@ export const getShipmentsByStatus = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication and admin check
+
     let jwtUser;
     try {
       jwtUser = requireAuth(event);
@@ -26,7 +26,6 @@ export const getShipmentsByStatus = async (
     }
     const tableName = getTableName();
 
-    // Get status from query string or path parameters
     const status_ = event.queryStringParameters?.status_ || event.pathParameters?.status_;
 
     if (!status_) {
@@ -45,7 +44,6 @@ export const getShipmentsByStatus = async (
 
     const service = new DynamoDBService(docClient, tableName, tableName);
 
-    // Fetch shipments by status
     const shipments = await service.getShipments({ status_: status_ as ShipmentStatus, sortOrder });
 
     return {

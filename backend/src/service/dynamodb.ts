@@ -20,24 +20,20 @@ import type {
 } from "../types/history";
 import { hashPassword } from "../utils/password";
 
-// GSI Index Names
 export const ROLE_CREATED_INDEX = "role-createdAt-index";
 export const SHIPMENT_STATUS_INDEX = "status-updatedAt-index";
 export const SHIPMENT_ID_INDEX = "shipmentId-index";
 
-// GSI Key Prefixes
-export const ROLE_PREFIX = "ROLE#"; // GSI 1 PK
-export const STATUS_PREFIX = "STATUS#"; // GSI 2 PK
+export const ROLE_PREFIX = "ROLE#";
+export const STATUS_PREFIX = "STATUS#";
 
-// Main Table PK/SK Prefixes
-export const SHIPMENT_PREFIX = "SHIPMENT#"; // PK for shipments
-export const SHIPMENT_SK_METADATA = "METADATA"; // SK for shipment metadata
-export const SHIPMENT_SK_EVENT = "EVENT#"; // SK for shipment events/history
+export const SHIPMENT_PREFIX = "SHIPMENT#";
+export const SHIPMENT_SK_METADATA = "METADATA";
+export const SHIPMENT_SK_EVENT = "EVENT#";
 
-export const USER_PREFIX = "USER#"; // PK for users
-export const USER_SK_METADATA = "METADATA"; // SK for user metadata
+export const USER_PREFIX = "USER#";
+export const USER_SK_METADATA = "METADATA";
 
-// DynamoDB storage shape for users
 interface UserRecord extends User {
   PK: string;
   SK: string;
@@ -48,7 +44,7 @@ interface UserRecord extends User {
 interface ShipmentRecord extends Omit<Shipment, "status_"> {
   PK: string;
   SK: string;
-  status_: string; // Allow prefixed value
+  status_: string;
 }
 
 interface ShipmentHistoryRecord extends ShipmentHistoryItem {
@@ -63,7 +59,6 @@ export class DynamoDBService {
     private readonly shipmentTableName: string,
   ) {}
 
-  // Conversion helper: User -> UserRecord
   private userToRecord(user: User): UserRecord {
     return {
       ...user,
@@ -74,7 +69,6 @@ export class DynamoDBService {
     };
   }
 
-  // Conversion helper: UserRecord -> User (if needed in the future)
   private recordToUser(record: UserRecord): User {
     const { PK, SK, rolePk, roleSk, ...user } = record;
     return user as User;
@@ -208,20 +202,19 @@ export class DynamoDBService {
       KeyConditionExpression: "#role = :role",
       ExpressionAttributeNames: { "#role": "role" },
       ExpressionAttributeValues: { ":role": role },
-      ScanIndexForward: sortOrder === "asc", // true for ascending, false for descending
+      ScanIndexForward: sortOrder === "asc",
     };
 
     const result = await this.docClient.query(params).promise();
     return (result.Items as UserRecord[]).map((record) => {
-      // Remove PK, SK, rolePk, roleSk before returning as User
+
       const { PK, SK, rolePk, roleSk, ...user } = record;
       return user as User;
     });
   }
 
-  // Conversion helper: Shipment -> ShipmentRecord (for storage)
   private shipmentToRecord(shipment: Shipment): ShipmentRecord {
-    // Accepts a Shipment (status_ is plain) and returns a ShipmentRecord (status_ is prefixed)
+
     const { status_, ...rest } = shipment;
     return {
       ...rest,
@@ -231,7 +224,6 @@ export class DynamoDBService {
     };
   }
 
-  // Conversion helper: ShipmentRecord -> Shipment (for business logic)
   private recordToShipment(record: ShipmentRecord): Shipment {
     const { PK, SK, status_, ...rest } = record;
     return {
@@ -254,7 +246,6 @@ export class DynamoDBService {
   async createShipment(input: CreateShipmentInput): Promise<Shipment> {
     const timestamp = new Date().toISOString();
 
-    // Accept input.status_ as plain value, store as prefixed
     const shipment: Shipment = {
       shipment_id: randomUUID(),
       ...input,
@@ -264,7 +255,6 @@ export class DynamoDBService {
 
     const item = this.shipmentToRecord(shipment);
 
-    // Ensure conditional put to prevent duplicate tracking numbers
     await this.docClient
       .put({
         TableName: this.shipmentTableName,
@@ -280,7 +270,7 @@ export class DynamoDBService {
     shipment_id: string,
     input: UpdateShipmentInput,
   ): Promise<Shipment | null> {
-    // First, query the GSI to find the shipment by shipment_id
+
     const gsiResult = await this.docClient
       .query({
         TableName: this.shipmentTableName,
@@ -295,7 +285,6 @@ export class DynamoDBService {
     const record = (gsiResult.Items as ShipmentRecord[] | undefined)?.[0];
     if (!record) return null;
 
-    // Remove PK, SK, and convert status_ to plain for update
     const currentShipment = this.recordToShipment(record);
     const updatedShipment: Shipment = {
       ...currentShipment,
@@ -315,7 +304,6 @@ export class DynamoDBService {
     return updatedShipment;
   }
 
-  //admin control shipment sorting by status
   async getShipments(filters: ShipmentRetrievalFilters): Promise<Shipment[]> {
     const { status_, sortOrder } = filters;
 
@@ -328,7 +316,7 @@ export class DynamoDBService {
       IndexName: SHIPMENT_STATUS_INDEX,
       KeyConditionExpression: "#status = :status",
       ExpressionAttributeNames: { "#status": "status_" },
-      ExpressionAttributeValues: { ":status": `${STATUS_PREFIX}${status_}` }, // Add prefix here
+      ExpressionAttributeValues: { ":status": `${STATUS_PREFIX}${status_}` },
       ScanIndexForward: sortOrder === "asc",
     };
 
@@ -338,7 +326,6 @@ export class DynamoDBService {
     );
   }
 
-  //user control, get 1 shipment per tracking number
   async getShipmentByTrackingNumber(tracking_number: string): Promise<Shipment | null> {
     const result = await this.docClient
       .query({
@@ -355,7 +342,7 @@ export class DynamoDBService {
     const record = result.Items?.[0] as ShipmentRecord | undefined;
     return record ? this.recordToShipment(record) : null;
   }
-  
+
   private historyToRecord(item: ShipmentHistoryItem): ShipmentHistoryRecord {
     return {
       ...item,
@@ -386,7 +373,6 @@ export class DynamoDBService {
 
     const record = this.historyToRecord(item);
 
-    // Ensure conditional put to prevent duplicate history IDs under the same PK
     await this.docClient
       .put({
         TableName: this.shipmentTableName,
@@ -412,7 +398,7 @@ export class DynamoDBService {
 
     return ((result.Items as ShipmentHistoryRecord[]) ?? []).map((r) => this.recordToHistory(r));
   }
-  
+
   async getShipmentHistoryForUser(tracking_number: string): Promise<ShipmentHistoryResponse[]> {
     const result = await this.docClient
       .query({

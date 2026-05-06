@@ -58,7 +58,7 @@ const UsersView = ({ runRequest }: UsersViewProps) => {
     if (data) {
       setShowEditForm(false);
       setSelectedUser(null);
-      // Refresh user list
+
       const path = `/users?role=${roleFilter}`;
       const userList = await runRequest(path, { method: "GET" }, "Get users");
       const list = Array.isArray(userList)
@@ -79,7 +79,7 @@ const UsersView = ({ runRequest }: UsersViewProps) => {
       { method: "DELETE" },
       "Delete user",
     );
-    // Refresh user list
+
     const path = `/users?role=${roleFilter}`;
     const userList = await runRequest(path, { method: "GET" }, "Get users");
     const list = Array.isArray(userList)

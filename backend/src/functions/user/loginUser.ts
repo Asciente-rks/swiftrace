@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { parse } from "../../utils/parse";
 import { handleError, headers } from "../../utils/error-handler";
+import { rateLimit } from "../../utils/rate-limit";
 import { docClient } from "../../../config/db";
 import { DynamoDBService } from "../../service/dynamodb";
 import { getTableName } from "../../utils/env";
@@ -12,6 +13,13 @@ export const loginUser = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const limited = rateLimit(event, {
+      limit: 5,
+      windowMs: 60_000,
+      bucketKey: "login",
+    });
+    if (limited) return limited;
+
     const body = parse(event.body) as Record<string, unknown>;
     const email = String(body?.email || "").trim().toLowerCase();
     const password = String(body?.password || "");
@@ -39,7 +47,12 @@ export const loginUser = async (
       };
     }
 
-    const token = signJwt({ user_id: user.user_id, role: user.role, email: user.email, name: user.name });
+    const token = signJwt({
+      user_id: user.user_id,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+    });
 
     return {
       statusCode: 200,
@@ -54,7 +67,6 @@ export const loginUser = async (
       }),
     };
   } catch (error) {
-    console.error("Error logging in:", error);
     return handleError(error);
   }
 };

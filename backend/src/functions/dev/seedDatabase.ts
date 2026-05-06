@@ -36,7 +36,7 @@ export const handler = async () => {
 
     for (const user of users) {
       try {
-        // Delete existing users with the same email
+
         const existingUsers = await service.scanUsersByEmail(user.email);
         for (const existing of existingUsers) {
           await service.deleteUser(existing.user_id);

@@ -13,7 +13,7 @@ export const updateShipment = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // JWT authentication
+
     let jwtUser;
     try {
       jwtUser = requireAuth(event);
@@ -33,7 +33,6 @@ export const updateShipment = async (
     }
     const tableName = getTableName();
 
-    // Get shipment_id from path or query
     const shipment_id =
       event.pathParameters?.shipment_id ||
       event.queryStringParameters?.shipment_id;
@@ -49,7 +48,6 @@ export const updateShipment = async (
       };
     }
 
-    // Parse and validate input
     const body = parse(event.body) as Record<string, unknown>;
     const validated = (await updateShipmentSchema.validate(body, {
       stripUnknown: true,

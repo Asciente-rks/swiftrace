@@ -1,4 +1,4 @@
-/* HeroSection component styles */
+
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -22,8 +22,6 @@
   max-width: 12ch;
   letter-spacing: -0.04em;
 }
-
-
 
 .hero-card {
   background: var(--surface);

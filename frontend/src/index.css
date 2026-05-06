@@ -12,7 +12,6 @@
   --shadow-soft: 0 10px 18px rgba(28, 22, 18, 0.06);
   --radius: 18px;
 
-  /* Surface alpha variants for translucent UI panels */
   --surface-60: rgba(255, 255, 255, 0.6);
   --surface-70: rgba(255, 255, 255, 0.7);
   --surface-72: rgba(255, 255, 255, 0.72);
@@ -36,7 +35,6 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Dark mode variables */
 .dark {
   --bg: #1a1a1a;
   --surface: #2a2a2a;
@@ -48,7 +46,6 @@
   --shadow: 0 18px 34px rgba(0, 0, 0, 0.3);
   --shadow-soft: 0 10px 18px rgba(0, 0, 0, 0.2);
 
-  /* Dark-mode surface alpha variants */
   --surface-60: rgba(42, 42, 42, 0.6);
   --surface-70: rgba(42, 42, 42, 0.7);
   --surface-72: rgba(42, 42, 42, 0.72);
@@ -132,7 +129,6 @@ p {
   min-height: 100vh;
 }
 
-/* Charts and graphics: prefer transparent backgrounds and inherit text color */
 canvas,
 svg {
   background: transparent !important;
@@ -144,7 +140,6 @@ svg {
   stroke: currentColor;
 }
 
-/* Chart container helper: use surface variables for panels that host charts */
 .chart-container,
 .chart-card {
   background: var(--surface-70);

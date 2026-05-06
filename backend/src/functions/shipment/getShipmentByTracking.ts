@@ -10,7 +10,6 @@ export const getShipmentByTracking = async (
   try {
     const tableName = getTableName();
 
-    // Get tracking number from query string or path parameters
     const tracking_number =
       event.pathParameters?.tracking_number ||
       event.queryStringParameters?.tracking_number;
@@ -28,7 +27,6 @@ export const getShipmentByTracking = async (
 
     const service = new DynamoDBService(docClient, tableName, tableName);
 
-    // Fetch shipment metadata
     const shipment = await service.getShipmentByTrackingNumber(tracking_number);
 
     if (!shipment) {
@@ -42,7 +40,6 @@ export const getShipmentByTracking = async (
       };
     }
 
-    // Fetch shipment history (user-safe)
     const history = await service.getShipmentHistoryForUser(tracking_number);
 
     console.log('Shipment metadata:', JSON.stringify(shipment, null, 2));

@@ -1,4 +1,4 @@
-/* Theme Toggle Component */
+
 .theme-toggle {
   position: absolute;
   top: 20px;
@@ -28,7 +28,6 @@
   transform: scale(0.95);
 }
 
-/* Dark mode adjustments */
 .dark .theme-toggle {
   background: var(--surface);
   border-color: var(--stroke);

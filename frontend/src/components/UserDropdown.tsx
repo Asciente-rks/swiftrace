@@ -39,7 +39,7 @@ export const UserDropdown = ({ userName, onLogout }: UserDropdownProps) => {
   useEffect(() => {
     if (isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      const top = rect.bottom + 8; // 8px gap
+      const top = rect.bottom + 8;
       const rightPx = window.innerWidth - rect.right;
       setMenuStyle({
         position: "fixed",

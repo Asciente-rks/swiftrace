@@ -49,7 +49,6 @@ const ShipmentUpdateSection = ({
       return;
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShipmentId(initialShipment.shipment_id);
     setStatus(initialShipment.status_ || "");
     setLocation(initialShipment.current_location || "");

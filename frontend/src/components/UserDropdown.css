@@ -1,4 +1,4 @@
-/* User Dropdown Component */
+
 .user-dropdown {
   position: relative;
 }
@@ -120,7 +120,6 @@
   margin: 4px 0;
 }
 
-/* Dark mode adjustments */
 .dark .user-dropdown-menu {
   background: rgba(42, 42, 42, 0.95);
   border-color: rgba(64, 64, 64, 0.9);

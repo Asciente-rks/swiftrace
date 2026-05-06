@@ -35,7 +35,6 @@ export const registerUser = async (
     })) as CreateUserInput;
     validated.email = validated.email.toLowerCase();
 
-    // Create user (admin only)
     const service = new DynamoDBService(docClient, tableName, tableName);
     const createdUser = await service.createUser(validated);
     return {

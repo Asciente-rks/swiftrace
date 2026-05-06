@@ -1,4 +1,4 @@
-/// <reference types="node" />
+
 import "dotenv/config";
 import { DynamoDB } from "aws-sdk";
 
@@ -30,7 +30,7 @@ const clearDatabase = async () => {
           itemsToDelete.push({ PK: pk, SK: sk });
         }
       } else {
-        // Delete shipments and history
+
         itemsToDelete.push({ PK: pk, SK: sk });
       }
     }
@@ -38,7 +38,6 @@ const clearDatabase = async () => {
     lastEvaluatedKey = result.LastEvaluatedKey;
   } while (lastEvaluatedKey);
 
-  // Delete the items
   for (const key of itemsToDelete) {
     await docClient.delete({
       TableName: tableName,

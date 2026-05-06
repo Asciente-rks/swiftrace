@@ -1,4 +1,4 @@
-/* LoginPage component styles */
+
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -108,7 +108,6 @@
   background: #ccc;
 }
 
-/* Dark mode adjustments for login page */
 .dark .login-container {
   background: rgba(42, 42, 42, 0.95);
   border-color: rgba(64, 64, 64, 0.9);
@@ -130,7 +129,6 @@
   border-color: rgba(15, 118, 110, 0.65);
 }
 
-/* Responsive design */
 @media (max-width: 1024px) {
   .login-layout {
     flex-direction: column;
@@ -138,7 +136,7 @@
   }
 
   .login-illustration {
-    order: -1; /* Move illustration above form on mobile */
+    order: -1;
     opacity: 0.6;
   }
 }
@@ -158,39 +156,47 @@
   }
 }
 
-/* Test Credentials Button */
-.test-creds-btn {
+.dev-quick-btn {
   position: fixed;
   bottom: 24px;
-  left: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 0;
-  background: var(--accent);
-  color: #fff;
-  font-size: 24px;
+  right: 24px;
+  border: 1px solid rgba(15, 118, 110, 0.5);
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: var(--surface-88);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.18);
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    background 0.2s ease;
   z-index: 999;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  backdrop-filter: blur(14px);
 }
 
-.test-creds-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 12px 32px rgba(15, 118, 110, 0.4);
+.dev-quick-btn::before {
+  content: "Dev Tools";
+  margin-left: 4px;
 }
 
-.test-creds-btn:active {
-  transform: scale(0.95);
+.dev-quick-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(15, 118, 110, 0.28);
+  background: var(--surface-92);
 }
 
-.test-creds-backdrop {
+.dev-quick-btn:active {
+  transform: scale(0.97);
+}
+
+.dev-quick-backdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -199,38 +205,63 @@
   z-index: 998;
 }
 
-.test-creds-popover {
+.dev-quick-popover {
   position: fixed;
-  bottom: 88px;
-  left: 24px;
+  bottom: 84px;
+  right: 24px;
   background: var(--surface-88);
   border: 1px solid var(--surface-85);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(14px);
   z-index: 1000;
-  min-width: 200px;
+  width: 280px;
 }
 
-.test-creds-popover h3 {
-  margin: 0 0 12px 0;
+.dev-quick-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.dev-quick-popover h3 {
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--accent);
 }
 
-.test-creds-close {
+.dev-quick-tag {
+  background: rgba(15, 118, 110, 0.18);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dev-quick-help {
+  margin: 0 0 12px 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.dev-quick-close {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   width: 28px;
   height: 28px;
   border: 0;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -238,23 +269,23 @@
   transition: background 0.2s ease;
 }
 
-.test-creds-close:hover {
+.dev-quick-close:hover {
   background: var(--surface-85);
 }
 
-.test-creds-list {
+.dev-quick-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.test-cred-option {
+.dev-quick-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
   border: 1px solid var(--surface-85);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface-92);
   color: var(--ink);
   cursor: pointer;
@@ -262,19 +293,25 @@
   transition: all 0.2s ease;
 }
 
-.test-cred-option:hover {
+.dev-quick-option:hover:not(:disabled) {
   background: var(--surface-85);
   border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
-.test-cred-option .role-label {
-  font-weight: 600;
+.dev-quick-option:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dev-quick-option .role-label {
+  font-weight: 700;
   color: var(--accent);
-  min-width: 60px;
+  min-width: 64px;
   text-align: left;
 }
 
-.test-cred-option code {
+.dev-quick-option code {
   font-family: monospace;
   font-size: 11px;
   color: var(--muted);

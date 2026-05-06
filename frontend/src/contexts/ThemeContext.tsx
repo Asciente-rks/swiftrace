@@ -17,7 +17,7 @@ export { ThemeContext };
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first, then system preference
+
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme) return savedTheme;
 
@@ -35,7 +35,6 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
       root.classList.remove("dark");
     }
 
-    // Save to localStorage
     localStorage.setItem("theme", theme);
   }, [theme]);
 

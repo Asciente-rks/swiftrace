@@ -1,4 +1,4 @@
-// Simple JWT decode (without verification, for client-side)
+
 export const decodeJWT = (token: string) => {
   try {
     const base64Url = token.split(".")[1];
