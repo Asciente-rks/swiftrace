@@ -1,14 +1,15 @@
 {
   "name": "swiftrace-backend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "main": "dist/handler.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/handler.js",
-    "dev": "ts-node src/handler.js",
+    "build": "node build.mjs",
+    "package": "node build.mjs && cd dist && zip -j function.zip index.js",
+    "deploy": "npm run package && bash scripts/deploy.sh",
     "seed": "ts-node seed.ts",
-    "clear": "ts-node clear.ts"
+    "clear": "ts-node clear.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "aws-sdk": "^2.1693.0",
@@ -23,7 +24,7 @@
     "@types/jsonwebtoken": "^9.0.1",
     "@types/node": "^20.19.39",
     "@types/nodemailer": "^6.4.7",
-    "serverless-dotenv-plugin": "^6.0.0",
+    "esbuild": "^0.24.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

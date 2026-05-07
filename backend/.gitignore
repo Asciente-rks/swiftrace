@@ -1,6 +1,7 @@
-node_modules/
-dist/
+node_modules
+dist
+.serverless
 .env
-.vscode/
+.env.local
+*.zip
 .DS_Store
-.serverless/

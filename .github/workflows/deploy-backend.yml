@@ -1,0 +1,94 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Override these in repo Settings → Secrets and variables → Actions → Variables
+  # if you need different values. Defaults match the original Serverless config.
+  AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+  LAMBDA_NAME: ${{ vars.LAMBDA_NAME || 'swiftrace-api' }}
+  TABLE_NAME: ${{ vars.DYNAMODB_TABLE || 'swiftrace-logistics' }}
+  ROLE_NAME: ${{ vars.LAMBDA_ROLE_NAME || 'swiftrace-lambda-role' }}
+  JWT_EXPIRES_IN: ${{ vars.JWT_EXPIRES_IN || '7d' }}
+  DEFAULT_ORIGIN: ${{ vars.DEFAULT_ORIGIN || 'Warehouse' }}
+
+jobs:
+  deploy:
+    name: Build & deploy to AWS Lambda
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        working-directory: backend
+        # `npm install` (not `npm ci`) so this works the first time even if the
+        # checked-in package-lock.json predates the conversion.
+        run: npm install --no-audit --no-fund
+
+      - name: Bundle Lambda with esbuild
+        working-directory: backend
+        run: node build.mjs
+
+      - name: Package zip
+        working-directory: backend/dist
+        run: |
+          zip -j function.zip index.js
+          ls -lh function.zip
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Provision & deploy
+        id: deploy
+        working-directory: backend
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          LAMBDA_NAME: ${{ env.LAMBDA_NAME }}
+          TABLE_NAME: ${{ env.TABLE_NAME }}
+          ROLE_NAME: ${{ env.ROLE_NAME }}
+          ZIP_PATH: ${{ github.workspace }}/backend/dist/function.zip
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRES_IN: ${{ env.JWT_EXPIRES_IN }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          DEFAULT_ORIGIN: ${{ env.DEFAULT_ORIGIN }}
+        run: |
+          chmod +x scripts/deploy.sh
+          scripts/deploy.sh
+
+      - name: Job summary
+        if: always() && steps.deploy.outputs.function_url
+        run: |
+          {
+            echo "## SwiftRace deploy"
+            echo ""
+            echo "| Resource | Value |"
+            echo "|---|---|"
+            echo "| Function URL | \`${{ steps.deploy.outputs.function_url }}\` |"
+            echo "| Lambda | \`${{ env.LAMBDA_NAME }}\` |"
+            echo "| Table | \`${{ env.TABLE_NAME }}\` |"
+            echo "| Region | \`${{ env.AWS_REGION }}\` |"
+            echo ""
+            echo "Set \`VITE_API_BASE\` in your frontend (.env or Vercel env) to the Function URL."
+          } >>"$GITHUB_STEP_SUMMARY"
