@@ -299,6 +299,33 @@ aws lambda add-permission \
   --no-cli-pager >/dev/null
 echo "  ✓ Function URL public-invoke permission attached"
 
+# --- Locate the known-good sibling Function URL in this account and dump its
+#     policy verbatim so we can see exactly what statements it carries.
+#     A working sibling URL is keigfneenyfhhurpg6z3kejpzi0gkdlo.lambda-url...
+#     (provided by the user). Its function name isn't known, so iterate.
+echo "▶ Locating working sibling Function URL (keigfneenyfhhurpg6z3kejpzi0gkdlo)…"
+WORKING_URL_ID="keigfneenyfhhurpg6z3kejpzi0gkdlo"
+WORKING_FN=""
+for fn in $(aws lambda list-functions --region "$AWS_REGION" --no-cli-pager --query 'Functions[].FunctionName' --output text); do
+  url=$(aws lambda get-function-url-config --function-name "$fn" --region "$AWS_REGION" --no-cli-pager --query FunctionUrl --output text 2>/dev/null || echo "")
+  if [ -n "$url" ] && echo "$url" | grep -q "$WORKING_URL_ID"; then
+    WORKING_FN="$fn"
+    break
+  fi
+done
+if [ -n "$WORKING_FN" ]; then
+  echo "  ✓ found: $WORKING_FN"
+  echo "▶ Working sibling's full resource policy:"
+  aws lambda get-policy \
+    --function-name "$WORKING_FN" \
+    --region "$AWS_REGION" \
+    --query 'Policy' --output text \
+    --no-cli-pager | node -e 'let r=""; process.stdin.on("data",c=>r+=c).on("end",()=>{try{console.log(JSON.stringify(JSON.parse(r),null,2))}catch(e){console.log(r)}})' || true
+else
+  echo "  ! could not locate the sibling function by URL ID"
+fi
+echo ""
+
 # ----------------------------------------------------------------------------
 # 6. Seed the database with the demo accounts.
 #
