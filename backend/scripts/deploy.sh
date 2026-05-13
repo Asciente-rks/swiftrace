@@ -314,28 +314,36 @@ aws lambda get-policy \
   --no-cli-pager || true
 echo ""
 
-# The Lambda *public-access-block* (account- or resource-scoped, introduced
-# in 2025) can deny invocations even when the regular resource policy says
-# Allow + Principal "*". If one is present on the function, surface it AND
-# remove it — this is a portfolio demo that's meant to be world-callable.
-echo "▶ Function-scoped public-access-block (if any):"
-aws lambda get-resource-policy \
-  --resource-arn "$LAMBDA_ARN" \
-  --no-cli-pager 2>&1 | head -40 || true
+echo "▶ Available AWS CLI version:"
+aws --version || true
 echo ""
 
-if aws lambda get-resource-policy \
-      --resource-arn "$LAMBDA_ARN" \
-      --no-cli-pager >/dev/null 2>&1; then
-  echo "  → public-access-block resource policy present, deleting…"
-  aws lambda delete-resource-policy \
-    --resource-arn "$LAMBDA_ARN" \
-    --no-cli-pager >/dev/null 2>&1 || \
-    echo "  ! delete-resource-policy failed (maybe not supported in this region/account)"
-  echo "  ✓ public-access-block resource policy cleared"
-else
-  echo "  (no function-scoped public-access-block found)"
-fi
+# Direct Lambda invoke (bypasses the Function URL gateway entirely). If this
+# succeeds we know the Lambda code itself is healthy, and the 403 we keep
+# seeing is being injected by the URL-fronting infrastructure (likely an
+# Organizations SCP / Resource Control Policy blocking public invocation).
+echo "▶ Direct Lambda invoke (no Function URL):"
+DIRECT_PAYLOAD='{
+  "version":"2.0",
+  "routeKey":"POST /auth/login",
+  "rawPath":"/auth/login",
+  "rawQueryString":"",
+  "headers":{"content-type":"application/json"},
+  "requestContext":{
+    "http":{"method":"POST","path":"/auth/login","protocol":"HTTP/1.1","sourceIp":"127.0.0.1","userAgent":"deploy-smoke"}
+  },
+  "body":"{\"email\":\"smoke@example.com\",\"password\":\"smoke\"}",
+  "isBase64Encoded":false
+}'
+DIRECT_STATUS=$(aws lambda invoke \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" \
+  --cli-binary-format raw-in-base64-out \
+  --payload "$DIRECT_PAYLOAD" \
+  --no-cli-pager \
+  /tmp/direct.json 2>&1 | tr -d '\n' || echo "INVOKE_FAILED")
+echo "  invoke result: $DIRECT_STATUS"
+echo "  body: $(head -c 500 /tmp/direct.json || true)"
 echo ""
 
 # Quick end-to-end smoke test directly against the Function URL — invoke once
@@ -352,7 +360,40 @@ SMOKE_STATUS=$(curl -s -o /tmp/smoke.json -w '%{http_code}' \
   -H 'Content-Type: application/json' \
   -d '{"email":"smoke@example.com","password":"smoke"}' || echo "000")
 echo "  HTTP $SMOKE_STATUS"
-echo "  body: $(head -c 200 /tmp/smoke.json || true)"
+echo "  body: $(head -c 500 /tmp/smoke.json || true)"
+echo ""
+
+# CloudWatch log group existence check — if no log group, the Lambda has
+# never actually been invoked successfully (errors at the URL gateway never
+# reach the function).
+echo "▶ CloudWatch log group:"
+aws logs describe-log-groups \
+  --log-group-name-prefix "/aws/lambda/$LAMBDA_NAME" \
+  --region "$AWS_REGION" \
+  --no-cli-pager 2>&1 | head -30 || true
+echo ""
+
+echo "▶ Most recent Lambda log events (if any):"
+LOG_STREAM=$(aws logs describe-log-streams \
+  --log-group-name "/aws/lambda/$LAMBDA_NAME" \
+  --order-by LastEventTime \
+  --descending \
+  --max-items 1 \
+  --region "$AWS_REGION" \
+  --query 'logStreams[0].logStreamName' \
+  --output text 2>/dev/null || echo "")
+if [ -n "$LOG_STREAM" ] && [ "$LOG_STREAM" != "None" ]; then
+  echo "  stream: $LOG_STREAM"
+  aws logs get-log-events \
+    --log-group-name "/aws/lambda/$LAMBDA_NAME" \
+    --log-stream-name "$LOG_STREAM" \
+    --limit 20 \
+    --region "$AWS_REGION" \
+    --query 'events[*].message' \
+    --output text 2>&1 | head -40 || true
+else
+  echo "  (no log streams — Lambda has never been invoked via URL)"
+fi
 echo ""
 
 FUNC_URL=$(aws lambda get-function-url-config \
