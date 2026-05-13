@@ -5,7 +5,21 @@ import Dashboard from "./components/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
-const DEFAULT_BASE = import.meta.env.VITE_API_BASE || "";
+// Lambda Function URL provisioned by .github/workflows/deploy-backend.yml.
+// Used as a fallback so the live deployment keeps working even if the Vercel
+// `VITE_API_BASE` env var is missing or still points at the legacy
+// Serverless / API Gateway URL that was decommissioned in the May 2026 migration.
+const FALLBACK_API_BASE =
+  "https://abtb2fet43jpfag24nwebhafpy0kmsha.lambda-url.ap-southeast-1.on.aws";
+
+const RAW_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/+$/, "");
+
+// If the configured base still points at the old API Gateway host
+// (execute-api.*.amazonaws.com), ignore it — that endpoint no longer exists.
+const DEFAULT_BASE =
+  RAW_BASE && !/execute-api\.[a-z0-9-]+\.amazonaws\.com/.test(RAW_BASE)
+    ? RAW_BASE
+    : FALLBACK_API_BASE;
 
 function App() {
   const [apiBase] = useState(DEFAULT_BASE);

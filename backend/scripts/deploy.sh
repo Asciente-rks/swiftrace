@@ -275,7 +275,16 @@ else
   echo "  ✓ Function URL created"
 fi
 
-# Public invocation permission (idempotent — ignore the conflict on re-runs).
+# Public invocation permission — remove-then-add so we always end on a known-good
+# resource policy. The previous "ignore conflict" pattern silently masked the case
+# where the policy was missing entirely (e.g. statement-id removed manually), which
+# manifested at runtime as a 403 AccessDeniedException from the Function URL.
+aws lambda remove-permission \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" \
+  --statement-id "FunctionURLAllowPublicAccess" \
+  --no-cli-pager >/dev/null 2>&1 || true
+
 aws lambda add-permission \
   --function-name "$LAMBDA_NAME" \
   --region "$AWS_REGION" \
@@ -283,7 +292,8 @@ aws lambda add-permission \
   --action "lambda:InvokeFunctionUrl" \
   --principal "*" \
   --function-url-auth-type NONE \
-  --no-cli-pager >/dev/null 2>&1 || true
+  --no-cli-pager >/dev/null
+echo "  ✓ Function URL public-invoke permission attached"
 
 FUNC_URL=$(aws lambda get-function-url-config \
   --function-name "$LAMBDA_NAME" \
