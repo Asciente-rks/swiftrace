@@ -6,11 +6,14 @@ export class HttpError extends Error {
     }
 }
 
+// CORS headers are intentionally NOT set here. The Function URL config
+// (see backend/scripts/deploy.sh) sets them at the AWS-gateway level
+// (Allow-Origin: *, Allow-Methods: *, Allow-Headers: *). Setting them in
+// the Lambda response too produced duplicate Access-Control-Allow-Origin
+// headers, which browsers treat as malformed CORS and silently abort the
+// fetch — surfacing as a generic "Network error" in the frontend.
 export const headers: Record<string, string> = {
     "content-type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
