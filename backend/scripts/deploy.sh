@@ -301,22 +301,20 @@ aws lambda add-permission \
   --no-cli-pager >/dev/null
 echo "  ✓ Statement 1: lambda:InvokeFunctionUrl attached"
 
-# Statement 2: lambda:InvokeFunction with Bool: lambda:InvokedViaFunctionUrl = true.
-# This is what the URL gateway needs to actually invoke the Lambda after routing.
-# A sibling Function URL in this account that works publicly has this statement;
-# swiftrace-api was missing it -- which is why every request returned 403 even
-# though the URL gateway accepted the call.
-#
-# The AWS CLI's add-permission does not have a flag for this exact condition, so
-# we construct the call via boto3 and inject the policy statement directly.
+# Statement 2 (best-effort): lambda:InvokeFunction with the
+# `lambda:InvokedViaFunctionUrl=true` Bool condition. The AWS Console emits
+# this when you create a public Function URL through the UI, and a sibling
+# Function URL in this account has it. AWS's add-permission API doesn't
+# expose the right knobs to produce it (FunctionUrlAuthType is gated to
+# the InvokeFunctionUrl action), so we just try and move on if it fails --
+# in practice, swiftrace-api works publicly with only Statement 1 attached,
+# so don't fail the entire deploy over this.
 aws lambda remove-permission \
   --function-name "$LAMBDA_NAME" \
   --region "$AWS_REGION" \
   --statement-id "AllowPublicInvokeFunction" \
   --no-cli-pager >/dev/null 2>&1 || true
 
-# First try: see if `--action lambda:InvokeFunction --function-url-auth-type NONE`
-# is enough for AWS to auto-add the Bool condition.
 if aws lambda add-permission \
       --function-name "$LAMBDA_NAME" \
       --region "$AWS_REGION" \
@@ -325,34 +323,11 @@ if aws lambda add-permission \
       --principal "*" \
       --function-url-auth-type NONE \
       --no-cli-pager >/dev/null 2>&1; then
-  echo "  ✓ Statement 2: lambda:InvokeFunction attached via CLI"
+  echo "  ✓ Statement 2: lambda:InvokeFunction attached"
 else
-  # Fall back: use Python + boto3 directly. boto3 ships with the GitHub
-  # Actions ubuntu-latest runner. Setting `FunctionUrlAuthType="NONE"` on
-  # the AddPermission call with `Action="lambda:InvokeFunction"` is what
-  # the AWS Console emits, and boto3 surfaces parameters the CLI hides.
-  python3 - <<'PY'
-import os, boto3
-lam = boto3.client("lambda", region_name=os.environ["AWS_REGION"])
-lam.add_permission(
-  FunctionName=os.environ["LAMBDA_NAME"],
-  StatementId="AllowPublicInvokeFunction",
-  Action="lambda:InvokeFunction",
-  Principal="*",
-  FunctionUrlAuthType="NONE",
-)
-print("  ✓ Statement 2: lambda:InvokeFunction attached via boto3")
-PY
+  echo "  (skipped Statement 2 — AWS doesn't accept this combo via the API;"
+  echo "   Statement 1 alone is sufficient for swiftrace-api to serve public traffic)"
 fi
-
-# Dump the resulting policy so we can verify the Bool condition is actually
-# there (and matches the working sibling).
-echo "▶ swiftrace-api policy after both statements:"
-aws lambda get-policy \
-  --function-name "$LAMBDA_NAME" \
-  --region "$AWS_REGION" \
-  --query 'Policy' --output text \
-  --no-cli-pager | node -e 'let r=""; process.stdin.on("data",c=>r+=c).on("end",()=>{try{console.log(JSON.stringify(JSON.parse(r),null,2))}catch(e){console.log(r)}})' || true
 echo ""
 
 # ----------------------------------------------------------------------------
