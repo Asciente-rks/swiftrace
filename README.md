@@ -160,9 +160,9 @@ flowchart LR
 
 | Tool | Purpose |
 |------|---------|
-| GitHub Actions (`deploy-backend.yml`) | On push to `main`: esbuild → zip → `aws lambda update-function-code` |
+| GitHub Actions (`deploy-backend.yml`) | On push to `main` (paths-filtered to `backend/**`): esbuild → zip → `aws lambda update-function-code` |
 | `scripts/deploy.sh` | Idempotent bash — provisions table, role, function, URL on first run; only uploads code on subsequent runs |
-| `aws-actions/configure-aws-credentials` | OIDC-based credential injection; no long-lived keys in secrets |
+| `aws-actions/configure-aws-credentials` | Injects `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` from GitHub Secrets into the shell. (OIDC is supported by this action but not currently wired up — long-lived keys for now.) |
 
 ### Frontend
 
@@ -317,7 +317,7 @@ swiftrace/
     ├── vercel.json
     ├── public/favicon.svg
     └── src/
-        ├── App.tsx                         # Routes + role guards
+        ├── App.tsx                         # Auth-gated routes (`/`, `/dashboard`); role-aware UI is inside Dashboard.tsx (`getRoleFromToken`)
         ├── main.tsx
         ├── App.css                         # Light/dark theme variables
         ├── index.css
@@ -555,7 +555,7 @@ The deploy workflow (`.github/workflows/deploy-backend.yml`) + `scripts/deploy.s
 
 | Variable | Purpose |
 |----------|---------|
-| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | AWS credentials (or use OIDC via `aws-actions/configure-aws-credentials`) |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | AWS credentials injected by `aws-actions/configure-aws-credentials@v4`. (You can swap to OIDC via the same action if you'd rather not store long-lived keys.) |
 | `EMAIL_USER` / `EMAIL_PASS` | Gmail (or any SMTP) creds for nodemailer tracking emails |
 | `JWT_SECRET` | Long random string for JWT signing |
 
@@ -576,7 +576,7 @@ The deploy workflow (`.github/workflows/deploy-backend.yml`) + `scripts/deploy.s
 
 | Variable | Notes |
 |----------|-------|
-| `VITE_API_URL` | Lambda Function URL — set in Vercel project settings or `.env.local` |
+| `VITE_API_BASE` | Lambda Function URL — set in Vercel project settings or `.env.local` (consumed in `App.tsx` via `import.meta.env.VITE_API_BASE`) |
 
 ---
 
@@ -621,7 +621,7 @@ npm install
 npm run dev               # Vite dev server at :5173
 ```
 
-The SPA expects `VITE_API_URL` to point at the Lambda Function URL (or a local emulator). For local backend testing, copy `backend/.env.example` to `backend/.env` and fill in your AWS credentials and the table name.
+The SPA expects `VITE_API_BASE` to point at the Lambda Function URL (or a local emulator). For local backend testing, copy `backend/.env.example` to `backend/.env` and fill in your AWS credentials and the table name.
 
 ```bash
 # Minimal .env for local development
