@@ -245,6 +245,12 @@ fi
 
 # ----------------------------------------------------------------------------
 # 5. Function URL — public, CORS open.
+#
+# We DELETE + RECREATE the URL config every deploy. The merely-update path
+# left the URL in a stuck "permission attached but invocations rejected with
+# 403 AccessDeniedException" state that nothing short of a full recreate
+# clears — the public Function URL hostname is derived from the function ARN,
+# so deleting and re-creating yields the same URL (no frontend change needed).
 # ----------------------------------------------------------------------------
 echo "▶ Ensuring Function URL…"
 CORS_JSON='{
@@ -258,27 +264,25 @@ CORS_JSON='{
 if aws lambda get-function-url-config \
       --function-name "$LAMBDA_NAME" \
       --region "$AWS_REGION" >/dev/null 2>&1; then
-  aws lambda update-function-url-config \
+  echo "  → deleting existing Function URL config to flush any stuck state…"
+  aws lambda delete-function-url-config \
     --function-name "$LAMBDA_NAME" \
     --region "$AWS_REGION" \
-    --auth-type NONE \
-    --cors "$CORS_JSON" \
     --no-cli-pager >/dev/null
-  echo "  ✓ Function URL config refreshed"
-else
-  aws lambda create-function-url-config \
-    --function-name "$LAMBDA_NAME" \
-    --region "$AWS_REGION" \
-    --auth-type NONE \
-    --cors "$CORS_JSON" \
-    --no-cli-pager >/dev/null
-  echo "  ✓ Function URL created"
+  sleep 3
 fi
 
-# Public invocation permission — remove-then-add so we always end on a known-good
-# resource policy. The previous "ignore conflict" pattern silently masked the case
-# where the policy was missing entirely (e.g. statement-id removed manually), which
-# manifested at runtime as a 403 AccessDeniedException from the Function URL.
+aws lambda create-function-url-config \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" \
+  --auth-type NONE \
+  --cors "$CORS_JSON" \
+  --no-cli-pager >/dev/null
+echo "  ✓ Function URL created (auth-type NONE, CORS *)"
+
+# Public invocation permission — remove-then-add. After a fresh URL recreate
+# any stale statement is gone, but keep the remove for re-runs against a URL
+# that wasn't just recreated.
 aws lambda remove-permission \
   --function-name "$LAMBDA_NAME" \
   --region "$AWS_REGION" \
@@ -294,6 +298,24 @@ aws lambda add-permission \
   --function-url-auth-type NONE \
   --no-cli-pager >/dev/null
 echo "  ✓ Function URL public-invoke permission attached"
+
+# ----------------------------------------------------------------------------
+# 6. Seed the database with the demo accounts.
+#
+# The frontend exposes admin@/shipper@/customer@swiftrace.com quick-login
+# buttons; those rows live in DynamoDB. Re-seeding is idempotent — seed.ts
+# deletes any existing rows with the same email before inserting.
+# ----------------------------------------------------------------------------
+echo "▶ Seeding demo users into DynamoDB ($TABLE_NAME)…"
+(
+  cd "$(dirname "$0")/.." || exit 1
+  LOGISTICS_DYNAMO_TABLE="$TABLE_NAME" \
+  SHIPMENT_DYNAMO_TABLE="$TABLE_NAME" \
+  AWS_REGION="$AWS_REGION" \
+  npx --yes ts-node seed.ts 2>&1 | sed 's/^/  /' || \
+    echo "  ! seed step failed (non-fatal, deploy continues)"
+)
+echo ""
 
 # Post-deploy smoke test — invoke the Function URL directly from CI so the
 # job fails loudly when the live endpoint isn't actually reachable.
