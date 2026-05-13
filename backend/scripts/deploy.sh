@@ -295,6 +295,23 @@ aws lambda add-permission \
   --no-cli-pager >/dev/null
 echo "  ✓ Function URL public-invoke permission attached"
 
+# Diagnostics — surface the actual on-the-wire state so future deploys don't
+# have to guess. If `AuthType` isn't NONE or the policy doesn't list the
+# expected statement, the runtime 403 we just hunted down will be obvious in
+# the next job log.
+echo "▶ Function URL diagnostics:"
+aws lambda get-function-url-config \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" \
+  --no-cli-pager || true
+echo ""
+echo "▶ Resource policy:"
+aws lambda get-policy \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" \
+  --no-cli-pager || true
+echo ""
+
 FUNC_URL=$(aws lambda get-function-url-config \
   --function-name "$LAMBDA_NAME" \
   --region "$AWS_REGION" \
