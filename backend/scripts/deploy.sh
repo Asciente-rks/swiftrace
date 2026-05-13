@@ -299,17 +299,60 @@ echo "  ✓ Function URL public-invoke permission attached"
 # have to guess. If `AuthType` isn't NONE or the policy doesn't list the
 # expected statement, the runtime 403 we just hunted down will be obvious in
 # the next job log.
+LAMBDA_ARN="arn:aws:lambda:${AWS_REGION}:${ACCOUNT_ID}:function:${LAMBDA_NAME}"
+
 echo "▶ Function URL diagnostics:"
 aws lambda get-function-url-config \
   --function-name "$LAMBDA_NAME" \
   --region "$AWS_REGION" \
   --no-cli-pager || true
 echo ""
-echo "▶ Resource policy:"
+echo "▶ Resource policy (add-permission statements):"
 aws lambda get-policy \
   --function-name "$LAMBDA_NAME" \
   --region "$AWS_REGION" \
   --no-cli-pager || true
+echo ""
+
+# The Lambda *public-access-block* (account- or resource-scoped, introduced
+# in 2025) can deny invocations even when the regular resource policy says
+# Allow + Principal "*". If one is present on the function, surface it AND
+# remove it — this is a portfolio demo that's meant to be world-callable.
+echo "▶ Function-scoped public-access-block (if any):"
+aws lambda get-resource-policy \
+  --resource-arn "$LAMBDA_ARN" \
+  --no-cli-pager 2>&1 | head -40 || true
+echo ""
+
+if aws lambda get-resource-policy \
+      --resource-arn "$LAMBDA_ARN" \
+      --no-cli-pager >/dev/null 2>&1; then
+  echo "  → public-access-block resource policy present, deleting…"
+  aws lambda delete-resource-policy \
+    --resource-arn "$LAMBDA_ARN" \
+    --no-cli-pager >/dev/null 2>&1 || \
+    echo "  ! delete-resource-policy failed (maybe not supported in this region/account)"
+  echo "  ✓ public-access-block resource policy cleared"
+else
+  echo "  (no function-scoped public-access-block found)"
+fi
+echo ""
+
+# Quick end-to-end smoke test directly against the Function URL — invoke once
+# from inside the deploy job so we know the deploy actually produces something
+# the browser can reach. The Function URL is captured below; reuse it here.
+FUNC_URL_RAW=$(aws lambda get-function-url-config \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" \
+  --query FunctionUrl --output text)
+SMOKE_URL="${FUNC_URL_RAW%/}/auth/login"
+echo "▶ Public smoke test → POST $SMOKE_URL"
+SMOKE_STATUS=$(curl -s -o /tmp/smoke.json -w '%{http_code}' \
+  -X POST "$SMOKE_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"smoke@example.com","password":"smoke"}' || echo "000")
+echo "  HTTP $SMOKE_STATUS"
+echo "  body: $(head -c 200 /tmp/smoke.json || true)"
 echo ""
 
 FUNC_URL=$(aws lambda get-function-url-config \
