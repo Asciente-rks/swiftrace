@@ -10,7 +10,7 @@ import "./App.css";
 // `VITE_API_BASE` env var is missing or still points at the legacy
 // Serverless / API Gateway URL that was decommissioned in the May 2026 migration.
 const FALLBACK_API_BASE =
-  "https://abtb2fet43jpfag24nwebhafpy0kmsha.lambda-url.ap-southeast-1.on.aws";
+  "https://ysdiyhemhgtyj667jwnkv3zusi0ewzvu.lambda-url.ap-southeast-1.on.aws";
 
 const RAW_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/+$/, "");
 

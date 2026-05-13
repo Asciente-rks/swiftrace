@@ -246,11 +246,10 @@ fi
 # ----------------------------------------------------------------------------
 # 5. Function URL — public, CORS open.
 #
-# We DELETE + RECREATE the URL config every deploy. The merely-update path
-# left the URL in a stuck "permission attached but invocations rejected with
-# 403 AccessDeniedException" state that nothing short of a full recreate
-# clears — the public Function URL hostname is derived from the function ARN,
-# so deleting and re-creating yields the same URL (no frontend change needed).
+# Update if it exists, create if not. Don't delete-and-recreate: contrary to
+# the AWS docs implying determinism, delete + create yields a *new* hostname
+# (we proved this the hard way on 2026-05-13), and a changing hostname breaks
+# the frontend.
 # ----------------------------------------------------------------------------
 echo "▶ Ensuring Function URL…"
 CORS_JSON='{
@@ -264,21 +263,22 @@ CORS_JSON='{
 if aws lambda get-function-url-config \
       --function-name "$LAMBDA_NAME" \
       --region "$AWS_REGION" >/dev/null 2>&1; then
-  echo "  → deleting existing Function URL config to flush any stuck state…"
-  aws lambda delete-function-url-config \
+  aws lambda update-function-url-config \
     --function-name "$LAMBDA_NAME" \
     --region "$AWS_REGION" \
+    --auth-type NONE \
+    --cors "$CORS_JSON" \
     --no-cli-pager >/dev/null
-  sleep 3
+  echo "  ✓ Function URL config refreshed"
+else
+  aws lambda create-function-url-config \
+    --function-name "$LAMBDA_NAME" \
+    --region "$AWS_REGION" \
+    --auth-type NONE \
+    --cors "$CORS_JSON" \
+    --no-cli-pager >/dev/null
+  echo "  ✓ Function URL created"
 fi
-
-aws lambda create-function-url-config \
-  --function-name "$LAMBDA_NAME" \
-  --region "$AWS_REGION" \
-  --auth-type NONE \
-  --cors "$CORS_JSON" \
-  --no-cli-pager >/dev/null
-echo "  ✓ Function URL created (auth-type NONE, CORS *)"
 
 # Public invocation permission — remove-then-add. After a fresh URL recreate
 # any stale statement is gone, but keep the remove for re-runs against a URL
