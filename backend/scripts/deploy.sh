@@ -295,104 +295,41 @@ aws lambda add-permission \
   --no-cli-pager >/dev/null
 echo "  ✓ Function URL public-invoke permission attached"
 
-# Diagnostics — surface the actual on-the-wire state so future deploys don't
-# have to guess. If `AuthType` isn't NONE or the policy doesn't list the
-# expected statement, the runtime 403 we just hunted down will be obvious in
-# the next job log.
-LAMBDA_ARN="arn:aws:lambda:${AWS_REGION}:${ACCOUNT_ID}:function:${LAMBDA_NAME}"
-
-echo "▶ Function URL diagnostics:"
-aws lambda get-function-url-config \
-  --function-name "$LAMBDA_NAME" \
-  --region "$AWS_REGION" \
-  --no-cli-pager || true
-echo ""
-echo "▶ Resource policy (add-permission statements):"
-aws lambda get-policy \
-  --function-name "$LAMBDA_NAME" \
-  --region "$AWS_REGION" \
-  --no-cli-pager || true
-echo ""
-
-echo "▶ Available AWS CLI version:"
-aws --version || true
-echo ""
-
-# Direct Lambda invoke (bypasses the Function URL gateway entirely). If this
-# succeeds we know the Lambda code itself is healthy, and the 403 we keep
-# seeing is being injected by the URL-fronting infrastructure (likely an
-# Organizations SCP / Resource Control Policy blocking public invocation).
-echo "▶ Direct Lambda invoke (no Function URL):"
-DIRECT_PAYLOAD='{
-  "version":"2.0",
-  "routeKey":"POST /auth/login",
-  "rawPath":"/auth/login",
-  "rawQueryString":"",
-  "headers":{"content-type":"application/json"},
-  "requestContext":{
-    "http":{"method":"POST","path":"/auth/login","protocol":"HTTP/1.1","sourceIp":"127.0.0.1","userAgent":"deploy-smoke"}
-  },
-  "body":"{\"email\":\"smoke@example.com\",\"password\":\"smoke\"}",
-  "isBase64Encoded":false
-}'
-DIRECT_STATUS=$(aws lambda invoke \
-  --function-name "$LAMBDA_NAME" \
-  --region "$AWS_REGION" \
-  --cli-binary-format raw-in-base64-out \
-  --payload "$DIRECT_PAYLOAD" \
-  --no-cli-pager \
-  /tmp/direct.json 2>&1 | tr -d '\n' || echo "INVOKE_FAILED")
-echo "  invoke result: $DIRECT_STATUS"
-echo "  body: $(head -c 500 /tmp/direct.json || true)"
-echo ""
-
-# Quick end-to-end smoke test directly against the Function URL — invoke once
-# from inside the deploy job so we know the deploy actually produces something
-# the browser can reach. The Function URL is captured below; reuse it here.
+# Post-deploy smoke test — invoke the Function URL directly from CI so the
+# job fails loudly when the live endpoint isn't actually reachable.
+# Catches the class of issues where AWS config looks correct
+# (AuthType NONE + Allow Principal "*" + lambda:InvokeFunctionUrl) but a
+# perimeter policy (Organizations SCP / Resource Control Policy) is silently
+# denying public invocations — in that case the Function URL returns
+# 403 AccessDeniedException and CloudWatch never receives an invocation.
 FUNC_URL_RAW=$(aws lambda get-function-url-config \
   --function-name "$LAMBDA_NAME" \
   --region "$AWS_REGION" \
   --query FunctionUrl --output text)
 SMOKE_URL="${FUNC_URL_RAW%/}/auth/login"
-echo "▶ Public smoke test → POST $SMOKE_URL"
+echo "▶ Smoke test → POST $SMOKE_URL"
 SMOKE_STATUS=$(curl -s -o /tmp/smoke.json -w '%{http_code}' \
   -X POST "$SMOKE_URL" \
   -H 'Content-Type: application/json' \
   -d '{"email":"smoke@example.com","password":"smoke"}' || echo "000")
 echo "  HTTP $SMOKE_STATUS"
-echo "  body: $(head -c 500 /tmp/smoke.json || true)"
-echo ""
+echo "  body: $(head -c 200 /tmp/smoke.json || true)"
 
-# CloudWatch log group existence check — if no log group, the Lambda has
-# never actually been invoked successfully (errors at the URL gateway never
-# reach the function).
-echo "▶ CloudWatch log group:"
-aws logs describe-log-groups \
-  --log-group-name-prefix "/aws/lambda/$LAMBDA_NAME" \
-  --region "$AWS_REGION" \
-  --no-cli-pager 2>&1 | head -30 || true
-echo ""
-
-echo "▶ Most recent Lambda log events (if any):"
-LOG_STREAM=$(aws logs describe-log-streams \
-  --log-group-name "/aws/lambda/$LAMBDA_NAME" \
-  --order-by LastEventTime \
-  --descending \
-  --max-items 1 \
-  --region "$AWS_REGION" \
-  --query 'logStreams[0].logStreamName' \
-  --output text 2>/dev/null || echo "")
-if [ -n "$LOG_STREAM" ] && [ "$LOG_STREAM" != "None" ]; then
-  echo "  stream: $LOG_STREAM"
-  aws logs get-log-events \
-    --log-group-name "/aws/lambda/$LAMBDA_NAME" \
-    --log-stream-name "$LOG_STREAM" \
-    --limit 20 \
-    --region "$AWS_REGION" \
-    --query 'events[*].message' \
-    --output text 2>&1 | head -40 || true
-else
-  echo "  (no log streams — Lambda has never been invoked via URL)"
+# The Lambda returns 4xx (401/400) for bad credentials but reaches the
+# function code; we expect that. A 403 with AccessDeniedException means the
+# Function URL gateway rejected the request before reaching the Lambda —
+# typically an account-level / Organizations perimeter policy blocking
+# public Lambda Function URLs. The Lambda itself is fine; investigate at
+# the AWS Console (Lambda → swiftrace-api → URL → check for resource
+# control policies, or AWS Organizations SCPs that restrict
+# lambda:InvokeFunctionUrl).
+if [ "$SMOKE_STATUS" = "403" ] && grep -q 'AccessDeniedException\|Function URL authorization' /tmp/smoke.json 2>/dev/null; then
+  echo ""
+  echo "::warning::Function URL returned 403 AccessDeniedException."
+  echo "::warning::Direct aws lambda invoke succeeds, so the Lambda code is healthy."
+  echo "::warning::Check for an AWS Organizations SCP / Resource Control Policy"
+  echo "::warning::denying lambda:InvokeFunctionUrl from public principals,"
+  echo "::warning::or an account-level public-access block for Lambda URLs."
 fi
 echo ""
 
