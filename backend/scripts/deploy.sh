@@ -289,15 +289,38 @@ aws lambda remove-permission \
   --statement-id "FunctionURLAllowPublicAccess" \
   --no-cli-pager >/dev/null 2>&1 || true
 
+# Note: omitting --function-url-auth-type so the resulting Statement has NO
+# Condition block. A sibling Function URL in this account works publicly, and
+# the most plausible diff is that ours was failing the StringEquals condition
+# for some subtle reason. Allowing unconditional invoke is identical for the
+# public-NONE case and one fewer thing for AWS to gate on.
 aws lambda add-permission \
   --function-name "$LAMBDA_NAME" \
   --region "$AWS_REGION" \
   --statement-id "FunctionURLAllowPublicAccess" \
   --action "lambda:InvokeFunctionUrl" \
   --principal "*" \
-  --function-url-auth-type NONE \
   --no-cli-pager >/dev/null
-echo "  ✓ Function URL public-invoke permission attached"
+echo "  ✓ Function URL public-invoke permission attached (no condition)"
+
+# Check whether AWS WAF is associated with this specific Lambda. A function-
+# scoped WAF Web ACL would produce exactly the symptom we're seeing (403 on
+# the public URL, 200 on direct invoke) and would explain why a sibling
+# Function URL in the same account works while this one doesn't.
+echo "▶ WAF Web ACL on Lambda (region scope):"
+aws wafv2 list-resources-for-web-acl-2 2>/dev/null || \
+aws wafv2 list-web-acls --scope REGIONAL --region "$AWS_REGION" --no-cli-pager 2>&1 | head -20 || true
+echo ""
+echo "▶ Any WAF associated with this function ARN?"
+LAMBDA_ARN="arn:aws:lambda:${AWS_REGION}:${ACCOUNT_ID}:function:${LAMBDA_NAME}"
+aws wafv2 list-web-acls --scope REGIONAL --region "$AWS_REGION" --no-cli-pager 2>/dev/null \
+  | node -e '
+let raw=""; process.stdin.on("data",c=>raw+=c).on("end",()=>{
+  try{const j=JSON.parse(raw); const acls=j.WebACLs||[]; console.log("  "+acls.length+" Web ACL(s) in this region");
+    acls.forEach(a=>console.log("  - "+a.Name+" ("+a.ARN+")"));
+  }catch(e){console.log("  (no web ACLs found or wafv2 unavailable)")}
+});' || true
+echo ""
 
 # ----------------------------------------------------------------------------
 # 6. Seed the database with the demo accounts.
