@@ -317,6 +317,44 @@ echo "▶ Seeding demo users into DynamoDB ($TABLE_NAME)…"
 )
 echo ""
 
+# One-off comparison dump — to compare against a known-good Function URL in
+# the same account. We've seen that another function URL in this same account
+# (keigfneenyfhhurpg6z3kejpzi0gkdlo.lambda-url.ap-southeast-1.on.aws) returns
+# 200, while swiftrace-api returns 403 with identical-looking config. That
+# means something on the swiftrace-api function itself (legacy from the
+# Serverless Framework provisioning) is at fault, not the account.
+echo "▶ Full swiftrace-api state dump (compare vs working sibling):"
+echo "--- get-function-configuration:"
+aws lambda get-function-configuration \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" --no-cli-pager || true
+echo ""
+echo "--- get-function-concurrency:"
+aws lambda get-function-concurrency \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" --no-cli-pager || true
+echo ""
+echo "--- get-function-code-signing-config:"
+aws lambda get-function-code-signing-config \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" --no-cli-pager 2>&1 | head -20 || true
+echo ""
+echo "--- list-aliases:"
+aws lambda list-aliases \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" --no-cli-pager || true
+echo ""
+echo "--- list-versions-by-function:"
+aws lambda list-versions-by-function \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" --no-cli-pager --query 'Versions[].Version' || true
+echo ""
+echo "--- get-policy (full text):"
+aws lambda get-policy \
+  --function-name "$LAMBDA_NAME" \
+  --region "$AWS_REGION" --no-cli-pager --output text || true
+echo ""
+
 # Post-deploy smoke test — invoke the Function URL directly from CI so the
 # job fails loudly when the live endpoint isn't actually reachable.
 # Catches the class of issues where AWS config looks correct
